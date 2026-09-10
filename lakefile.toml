@@ -26,3 +26,7 @@ globs = ["Euler", "Euler.+"]
 [[lean_lib]]
 name = "ComparatorChallenges"
 globs = ["ComparatorChallenges.+"]
+
+[[lean_lib]]
+name = "Criticality"
+globs = ["Criticality", "Criticality.+"]
