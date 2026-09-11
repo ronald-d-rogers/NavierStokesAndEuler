@@ -28,12 +28,13 @@ open scoped FourierTransform SchwartzMap ENNReal Topology
 
 attribute [local irreducible] Real.rpow
 attribute [local irreducible] MeasureTheory.Lp.fourierTransformₗᵢ
+attribute [local irreducible] SchwartzMap.fourierTransformCLM
 
 namespace Criticality
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
-variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℂ F]
+variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℂ F]
 
 /-- **Cauchy–Schwarz with support**: the `L¹` norm of a function supported on a
 measurable set `s` is bounded by `√(volume s) · ‖g‖₂`.
@@ -131,19 +132,35 @@ theorem norm_toLp_one_le_sqrt_measure_mul_norm_toLp_two
     (Filter.Eventually.of_forall (fun x => sq_nonneg ‖g x‖))
 
 /-- **Bernstein's inequality**: if `𝓕 f` is supported in the open ball of radius
-`N`, then `‖f‖_∞ ≤ √(volume (ball 0 N)) · ‖f‖₂`. -/
+`N`, then `‖f‖_∞ ≤ √(volume (ball 0 N)) · ‖f‖₂`.
+
+Note: `F` is assumed to be a complex inner-product space (rather than just a
+normed space) because the Plancherel step `h3` — that the `L²` Fourier transform
+is an isometry — is only available in mathlib for `[InnerProductSpace ℂ F]`. The
+measure is written explicitly as `volume` throughout to avoid a `whnf` timeout in
+the `extendOfIsometry` elaboration of `𝓕 (f.toLp 2)`. -/
 theorem bernstein [CompleteSpace F] (f : 𝓢(V, F)) (N : ℝ)
     (hband : ∀ x, 𝓕 f x ≠ 0 → ‖x‖ < N)
     (hs_finite : volume (Metric.ball (0 : V) N) < ⊤) :
     ‖f.toBoundedContinuousFunction‖ ≤
-      Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖f.toLp 2‖ := by
-  sorry
--- Proof outline:
---   ‖f‖∞ ≤ ‖𝓕 f‖₁                                (sup form of `pointwise_le_L1_fourier`)
---        ≤ √(vol (ball 0 N)) · ‖𝓕 f‖₂            (`norm_toLp_one_le_sqrt_measure_mul_norm_toLp_two`)
---        = √(vol (ball 0 N)) · ‖f‖₂               (Plancherel `norm_fourier_eq`)
--- Each step is written above; the last (Plancherel) step `h3` needs the L²-Fourier
--- measure-coercion to be made `irreducible` to avoid a `whnf` elaboration timeout.
+      Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖f.toLp 2 volume‖ := by
+  have h1 : ‖f.toBoundedContinuousFunction‖ ≤ ‖(𝓕 f).toLp 1 volume‖ := by
+    rw [BoundedContinuousFunction.norm_le (by positivity)]
+    intro x
+    simpa using pointwise_le_L1_fourier f x
+  have h2 : ‖(𝓕 f).toLp 1 volume‖ ≤
+      Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖(𝓕 f).toLp 2 volume‖ := by
+    exact norm_toLp_one_le_sqrt_measure_mul_norm_toLp_two (𝓕 f)
+      Metric.isOpen_ball.measurableSet hs_finite (by
+        intro x hx
+        have hx' : ‖x‖ < N := hband x hx
+        simpa [Metric.mem_ball, dist_eq_norm] using hx')
+  have h3 : ‖(𝓕 f).toLp 2 volume‖ = ‖f.toLp 2 volume‖ := by
+    exact SchwartzMap.norm_fourier_toL2_eq f
+  calc
+    ‖f.toBoundedContinuousFunction‖ ≤ ‖(𝓕 f).toLp 1 volume‖ := h1
+    _ ≤ Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖(𝓕 f).toLp 2 volume‖ := h2
+    _ = Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖f.toLp 2 volume‖ := by rw [h3]
 
 end Criticality
 
