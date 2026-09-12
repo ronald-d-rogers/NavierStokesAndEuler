@@ -30,3 +30,7 @@ globs = ["ComparatorChallenges.+"]
 [[lean_lib]]
 name = "Criticality"
 globs = ["Criticality", "Criticality.+"]
+
+[[lean_lib]]
+name = "Cascade"
+globs = ["Cascade", "Cascade.+"]

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" font-family="Helvetica, Arial, sans-serif">
+  <rect width="800" height="600" fill="#ffffff"/>
+
+  <text x="400" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#111">The critical line p = d for Navier–Stokes scaling</text>
+  <text x="400" y="52" text-anchor="middle" font-size="13" fill="#555">scaling exponent  σ = 1 − d/p  ·  σ = 0 exactly on p = d (the critical Lebesgue space L^d)</text>
+
+  <!-- regions -->
+  <polygon points="90,520 690,80 90,80" fill="#e7f4ea"/>
+  <polygon points="90,520 690,80 690,520" fill="#fdeae4"/>
+
+  <!-- grid -->
+  <g stroke="#dddddd" stroke-width="1">
+    <line x1="210" y1="80" x2="210" y2="520"/>
+    <line x1="330" y1="80" x2="330" y2="520"/>
+    <line x1="450" y1="80" x2="450" y2="520"/>
+    <line x1="570" y1="80" x2="570" y2="520"/>
+    <line x1="90" y1="432" x2="690" y2="432"/>
+    <line x1="90" y1="344" x2="690" y2="344"/>
+    <line x1="90" y1="256" x2="690" y2="256"/>
+    <line x1="90" y1="168" x2="690" y2="168"/>
+  </g>
+
+  <!-- axes -->
+  <g stroke="#333" stroke-width="1.6" fill="none">
+    <line x1="90" y1="520" x2="712" y2="520"/>
+    <line x1="90" y1="520" x2="90" y2="62"/>
+  </g>
+  <polygon points="712,520 700,516 700,524" fill="#333"/>
+  <polygon points="90,62 86,74 94,74" fill="#333"/>
+
+  <!-- special lines -->
+  <line x1="90" y1="344" x2="690" y2="344" stroke="#1f6feb" stroke-width="2.4" stroke-dasharray="8 4"/>
+  <line x1="90" y1="256" x2="690" y2="256" stroke="#8250df" stroke-width="1.8" stroke-dasharray="5 4"/>
+  <line x1="90" y1="520" x2="690" y2="80" stroke="#1a7f37" stroke-width="3"/>
+
+  <!-- ticks -->
+  <g font-size="12" fill="#333" text-anchor="middle">
+    <text x="210" y="540">1</text>
+    <text x="330" y="540">2</text>
+    <text x="450" y="540">3</text>
+    <text x="570" y="540">4</text>
+    <text x="690" y="540">5</text>
+    <text x="78" y="524" text-anchor="end">0</text>
+  </g>
+  <g font-size="12" fill="#333" text-anchor="end">
+    <text x="80" y="436">1</text>
+    <text x="80" y="348">2</text>
+    <text x="80" y="260">3</text>
+    <text x="80" y="172">4</text>
+    <text x="80" y="84">5</text>
+  </g>
+
+  <!-- axis titles -->
+  <text x="400" y="566" text-anchor="middle" font-size="14" font-weight="bold" fill="#222">dimension d</text>
+  <text x="30" y="300" text-anchor="middle" font-size="14" font-weight="bold" fill="#222" transform="rotate(-90 30 300)">Lebesgue exponent p</text>
+
+  <!-- region labels -->
+  <text x="235" y="150" text-anchor="middle" font-size="14" font-weight="bold" fill="#1a7f37">σ &gt; 0</text>
+  <text x="235" y="170" text-anchor="middle" font-size="12" fill="#2b7a3d">subcritical</text>
+  <text x="235" y="186" text-anchor="middle" font-size="11" fill="#2b7a3d">(norm stronger than critical)</text>
+
+  <text x="565" y="430" text-anchor="middle" font-size="14" font-weight="bold" fill="#c2410c">σ &lt; 0</text>
+  <text x="565" y="450" text-anchor="middle" font-size="12" fill="#b45309">supercritical</text>
+  <text x="565" y="466" text-anchor="middle" font-size="11" fill="#b45309">(norm weaker than critical)</text>
+
+  <!-- line labels -->
+  <text x="618" y="122" font-size="13" font-weight="bold" fill="#1a7f37">p = d</text>
+  <text x="618" y="138" font-size="11" fill="#1a7f37">critical</text>
+  <text x="600" y="337" font-size="12" font-weight="bold" fill="#1f6feb">p = 2</text>
+  <text x="600" y="351" font-size="10" fill="#1f6feb">energy L²</text>
+  <text x="600" y="250" font-size="12" font-weight="bold" fill="#8250df">p = 3</text>
+  <text x="600" y="264" font-size="10" fill="#8250df">L³</text>
+
+  <!-- key points -->
+  <circle cx="330" cy="344" r="6.5" fill="#ffffff" stroke="#1a7f37" stroke-width="3"/>
+  <text x="330" y="318" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a7f37">d = 2: energy is critical</text>
+  <text x="330" y="333" text-anchor="middle" font-size="10" fill="#2b7a3d">L² = L^d</text>
+
+  <circle cx="450" cy="344" r="6.5" fill="#c2410c"/>
+  <text x="470" y="378" font-size="12" font-weight="bold" fill="#c2410c">d = 3: energy just below critical</text>
+  <text x="470" y="393" font-size="10" fill="#b45309">the knife's edge — 3D NS is open</text>
+
+  <circle cx="450" cy="256" r="5" fill="#8250df"/>
+  <text x="378" y="248" text-anchor="end" font-size="11" fill="#8250df">L³ (d = 3) sits on the line</text>
+
+  <!-- formula box -->
+  <g>
+    <rect x="96" y="380" width="196" height="92" rx="8" fill="#ffffff" stroke="#bbb" stroke-width="1"/>
+    <text x="110" y="402" font-size="12" font-weight="bold" fill="#222">‖u_λ(·,0)‖_p = λ^(1−d/p) ‖u₀‖_p</text>
+    <text x="110" y="424" font-size="12" fill="#1a7f37">on p = d :  σ = 0  (scale-invariant)</text>
+    <text x="110" y="442" font-size="11" fill="#555">p &gt; d : σ &gt; 0  ·  p &lt; d : σ &lt; 0</text>
+    <text x="110" y="462" font-size="11" fill="#555">energy p = 2 crosses d = 2 only</text>
+  </g>
+</svg>

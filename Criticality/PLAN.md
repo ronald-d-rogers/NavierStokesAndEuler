@@ -54,6 +54,11 @@ then extend to `L²`/general `L^p` as needed.
 
 ## Pillar D — The dyadic shell model and the obstruction
 
+> **Moved to the `Cascade` library.** The implementation now lives in
+> `Cascade/ShellModel.lean`: a shell model of the cascade is a *model*, not a
+> criticality theorem, and its continuation belongs with the dyadic-blowup question
+> (see `Cascade/VISION.md`, `Cascade/PLAN.md`). The specification below is unchanged.
+
 The dyadic shell model: one complex variable `u_k` per frequency octave, with
 nearest-neighbor coupling and viscosity `ν·2^{2k}`:
 

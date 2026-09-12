@@ -263,9 +263,14 @@ exponent form — a full PDE-level invariance statement is out of scope). All
 
 ---
 
-## Pillar D — shell model (done)
+## Pillar D — shell model (moved out)
 
-`Criticality/ShellModel.lean` (finite dyadic shell model):
+> **Moved.** The implementation now lives in the sibling library `Cascade/`
+> (`Cascade/ShellModel.lean`): a dyadic cascade model is a *model*, not a criticality
+> theorem, so its continuation lives on the `dyadic-cascade` branch. The declarations
+> below are unchanged — only relocated.
+
+`Cascade/ShellModel.lean` (finite dyadic shell model):
 
 ```lean
 def shellRHS (ν : ℝ) (C : ℕ → ℝ) (u : ℕ → ℝ) (k : ℕ) : ℝ :=
@@ -323,7 +328,7 @@ Fully scoped in their files, deliberately left as `-- TODO`/docstring notes:
 3. **C1 full PDE invariance** (`ScalingCriticality.lean`) — stated in exponent form
    (all three NS terms rescale by `λ³`); a full solution-space invariance statement is
    out of scope.
-4. **D3 forced blowup** (`ShellModel.lean`) — optional per PLAN; skipped.
+4. **D3 forced blowup** (`Cascade/ShellModel.lean`) — optional per PLAN; skipped.
 
 ---
 
@@ -337,8 +342,10 @@ Fully scoped in their files, deliberately left as `-- TODO`/docstring notes:
   B2 (`Criticality/ConvolutionCoupling.lean`, convolution coupling).
 - **Pillar C:** ✅ done — `Criticality/ScalingCriticality.lean` (C1 exponent form,
   C2 `integral_norm_comp_smul` + critical exponent, C3 knife's edge).
-- **Pillar D:** ✅ done — `Criticality/ShellModel.lean` (D1 energy identity, D2
-  obstruction citing Pillar A's Bernstein). D3 (forced blowup) is optional/skipped.
+- **Pillar D:** ✅ done, but **moved out** to the sibling library `Cascade/`
+  (`Cascade/ShellModel.lean`) — D1 energy identity, D2 obstruction. A dyadic cascade
+  model is not a criticality theorem, so its continuation lives on the `dyadic-cascade`
+  branch. D3 (forced blowup) is optional and skipped here.
 - **Pillar E:** ✅ done — `Criticality/EulerProduct.lean` re-exposes
   `riemannZeta_eulerProduct` (see the Pillar E section above).
 
