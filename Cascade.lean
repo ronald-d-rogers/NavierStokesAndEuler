@@ -17,5 +17,6 @@ import Cascade.Enstrophy
 import Cascade.Riccati
 import Cascade.EnstrophyBound
 import Cascade.BuoyancySign
+import Cascade.DissipationThreshold
 import Cascade.ScaleObstruction
 import Cascade.BernsteinTransfer

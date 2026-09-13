@@ -31,6 +31,11 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > Stage **B′** is `Cascade/BuoyancySign.lean` — `|κ|` replaces `κ`, dropping the `0 ≤ κ` hypothesis
 > from eleven statements, so **no finite-time blowup for any sign of `κ`** either. The truncated
 > Stage-R model is therefore *closed*: no blowup, any `κ`, forced or not.
+> `Cascade/DissipationThreshold.lean` then locates **where the method dies**: generalising the
+> dissipation to degree `e` (Cheskidov's `α = e/2`), the enstrophy barrier closes unconditionally
+> for `e ≥ 2`, ties exactly at `e = 1` (which is Cheskidov's own regularity threshold `α = 1/2`),
+> and the quadratic dissipation domination provably fails for every `e < 2`. The model's own
+> `e = 2` is the **bottom** of the barrier's unconditional range.
 > `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
@@ -69,6 +74,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/ScaleObstruction.lean` | stage O′ — frequency-localized dissipation dominance (Palasek, shell form) |
 | `Cascade/ForcedModel.lean` | stage B — the forced model; forced energy and enstrophy bounds (both negative) |
 | `Cascade/BuoyancySign.lean` | stage B′ — `\|κ\|` replaces `κ`: no-blowup for **every** sign of `κ` (11 statements re-proved) |
+| `Cascade/DissipationThreshold.lean` | the dissipation threshold: no blowup for degree `e ≥ 2`; the barrier ties at `e = 1`; quadratic domination provably fails below `e = 2` |
 | `Cascade/BernsteinTransfer.lean` | the Bernstein `N^{d/2}` exponent is dominated by dissipation |
 | `Cascade/ConcentrationBarrier.lean` | Bernstein chain, part 1 (pointwise `≤ ‖𝓕 f‖₁`) |
 | `Cascade/Bernstein.lean` | Bernstein chain, part 2 (`‖f‖∞ ≤ √(vol ball) ‖f‖₂`) |
@@ -78,7 +84,8 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
-`BuoyancySign`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
+`BuoyancySign`, `DissipationThreshold`, `ScaleObstruction`, `BernsteinTransfer` (and hence the
+Bernstein chain).
 
 ---
 
@@ -966,28 +973,94 @@ all, matching `ForcedModel.lean`.
 
 ---
 
+## Done — the dissipation threshold (`Cascade/DissipationThreshold.lean`)
+
+Freezes the model with a general **dissipation degree** `e` — both channels, `ν·2^{ek}u_k` and
+`μ·2^{ek}θ_k` — so `e = 2` is the library's Laplacian and Cheskidov's `α` is `e/2`. Recovery at
+`e = 2` is `velocityRHSDegreeE_two` / `temperatureRHSDegreeE_two` / `boussinesqRHSDegreeE_two`, and
+both components are scaling covariant with `ν, μ ↦ ·λ^{b+1−e}`, specialising to the library's
+`λ^{b−1}` at `e = 2`.
+
+### Two different thresholds, which are easy to conflate
+
+With `H = Σ2^{2k}u_k²`, `E = Σu_k²`, `D_e = Σ2^{(2+e)k}u_k²` (the enstrophy-weighted dissipation),
+`W_e = Σ2^{(2−e)k}u_k²`:
+
+1. **Quadratic domination** `D_e ≥ c·H²/E` holds **iff `e ≥ 2`**. Below `e = 2` it fails for every
+   constant, with the single-mode witness `D_e·E/H² = 2^{(e−2)k} → 0`:
+   ```lean
+   theorem single_mode_dissipation_ratio (e : ℤ) (k : ℕ) :
+       D_e (deltaShell k) (k+1) * E (deltaShell k) (k+1) / (H (deltaShell k) (k+1))^2
+         = (2:ℝ) ^ ((e-2) * (k:ℤ))
+   theorem no_uniform_dissipation_domination (e : ℤ) (he : e < 2) (c : ℝ) (hc : 0 < c) :
+       ∃ (u : ℤ → ℝ) (N : ℕ), D_e u N * E u N < c * (H u N)^2
+   ```
+2. **Barrier tractability** — what the enstrophy barrier actually needs. The interpolated backplate
+   ```lean
+   theorem weighted_cauchy_schwarz (e : ℤ) (u) (N) : (H u N)^2 ≤ D_e u N * W_e u N
+   theorem weightedEnstrophy_sq_le (e : ℤ) (he0 : 0 ≤ e) (he2 : e ≤ 2) (u) (N) :
+       (W_e u N)^2 ≤ (E u N)^e * (H u N)^(2-e)
+   theorem dissipation_interp_sq (e : ℤ) (he0 : 0 ≤ e) (he2 : e ≤ 2) (u) (N) :
+       (H u N)^((2+e).toNat) ≤ (D_e u N)^2 * (E u N)^e
+   ```
+   chains to `D_e ≥ H^{1+e/2}/E^{e/2}` — dissipation `H`-homogeneity `1 + e/2` against the cubic
+   transfer's `3/2`. So the barrier closes **unconditionally iff `e > 1`**; at `e = 1` the two
+   homogeneities **tie exactly** and it closes only conditionally (`ν > 3√E_max`); below that it is
+   dead. For integers: unconditional at `e ≥ 2`, marginal at `e = 1`, dead at `e ≤ 0`.
+
+The two are genuinely different questions: the barrier needs `1 + e/2 > 3/2`, *not* the homogeneity-2
+quadratic domination. It was exactly this conflation that produced a spurious "the threshold is
+`e = 2`, the brief is wrong" in a first pass at this file — see gotcha 17.
+
+### The regular side, and what it means
+
+```lean
+theorem truncated_unforced_enstrophy_bounded_degreeE (hν : 0 < ν) (hμ : 0 < μ) (he : 2 ≤ e) … :
+    ∃ C, ∀ t ∈ Set.Icc 0 T, enstrophy (u t) N ≤ C
+theorem forced_truncated_enstrophy_bounded_degreeE (hν : 0 < ν) (he : 2 ≤ e) … :
+    ∃ C, ∀ t ∈ Set.Icc 0 T, enstrophy (u t) N ≤ C
+```
+
+Both carry `|κ|` (no sign hypothesis — Stage B′) and use `dissipation_ge_of_two_le`
+(`e ≥ 2 ⇒ D_e ≥ D_2 ≥ H²/E`), after which the Stage O′/B Young-plus-barrier argument goes through
+unchanged. Ceilings for energy and for the thermal sinks come from continuity on the compact
+`[0,T]`. `tempEnstrophyE e θ N = Σ2^{ek}θ_k²` is the degree-`e` thermal sink, matching the library's
+convention that `tempEnstrophy` carries the dissipation weight.
+
+**The finding.** The barrier's marginal point is `e = 1`, i.e. `α = 1/2` — which is **exactly
+Cheskidov's global-regularity threshold**. So the natural energy method is *exponent-sharp*: it dies
+at the same boundary as the state of the art. That is why the open gap `(2/3, 1)` in `α` looks real
+rather than technical — the obvious method cannot cross it. It does **not** prove some cleverer
+argument cannot; only that this one is sharp. And the exponent whose nonlinear estimates match 3D
+Navier–Stokes is `α = 2/5` (`e = 4/5`), which lies *below* the barrier threshold and inside the
+open gap: that is the formal content of "this toy model is easier than 3D Navier–Stokes".
+
+**Integer restriction.** `dyadicWeight` is `zpow`, so `e : ℤ`. The unconditional range is `e ≥ 2`,
+and the model's own exponent is `e = 2` — so the model sits at the **bottom** of the range the
+barrier reaches, and there was never room to demonstrate the threshold by lowering `e` within the
+integers. The continuous threshold would need `Real.rpow` for `2^{ek}`, real `e`, which is a
+different (and much messier) formalisation; `dissipation_interp_sq` deliberately avoids it by
+squaring, which turns every exponent into an integer.
+
+---
+
 ## Open — where a dyadic blowup could still live
 
 The **frozen truncated model is now closed**: no finite-time blowup for any `κ`, forced or unforced,
 in energy or enstrophy (Stages O, O′, B, B′). Untruncated it is cited-only (Cheskidov). So the
 remaining directions all *leave* that model.
 
-- **The dissipation-degree dial (recommended next).** `Cascade/DissipationDegree.lean` already
-  defines `velocityRHSDegree` for a general degree `d` (`d = 2α`), so the infrastructure exists, and
-  the target is the **phase diagram in `d`** for the truncated model.
-  *Upper side:* for `d` large the enstrophy barrier closes — no blowup — and the Stage O′/B proofs
-  should extend with `d`-dependent constants; the work is the weighted Cauchy–Schwarz step.
-  *Lower side:* for `d` small the barrier must fail — at low `d` the low modes are barely damped,
-  dissipation degenerates from quadratic towards linear in `H`, and the cubic production `6H√H`
-  runs away. Cheskidov's route is the inverted Hölder lemma plus a Riccati `Ḣ ≳ H^{3/2}`
-  (`Riccati.lean` has the engine; the inverted Hölder lemma is a *finite-sum* inequality, the easy
-  case). Cheskidov's thresholds are `α ≥ 1/2` regular, `α < 1/3` blowup, gap between, i.e.
-  `d ≥ 1` and `d < 2/3`.
-  *Payoff:* a genuine blowup theorem, hence a real `B ∧ O` contrast **inside this library** — one
-  model family, the dissipation degree deciding. *Risk:* the positivity/monotonicity step
-  (`u_n ≥ 0`, from Cheskidov's comparison principle) that makes the cubic production positive.
-  *Fidelity:* the dial is **not** free in the Boussinesq model — that is exactly Stage R′ — so this
-  is a result about the dyadic model *family*, with the Boussinesq branch located at `d = 2`.
+- **Blowup below the threshold (the other half of the degree dial).** The *regular* side is done —
+  see the dissipation-threshold section above: no blowup for `e ≥ 2`, and the barrier is
+  exponent-sharp at `e = 1`. What is **not** done is the positive half: a blowup theorem for small
+  `e`. Cheskidov has it for `α < 1/3` (`e < 2/3`, so `e ≤ 0` for integers), and his route is the
+  inverted Hölder lemma plus a Riccati `Ḣ ≳ H^{3/2}` — `Riccati.lean` has the engine, and the
+  inverted Hölder lemma is a *finite-sum* inequality, the easy case. The real obstacle is the
+  positivity/monotonicity step (`u_n ≥ 0`, from Cheskidov's comparison principle) that makes the
+  cubic production positive. *Payoff:* a genuine blowup theorem, hence a real `B ∧ O` contrast
+  **inside this library**. *Fidelity:* the dial is **not** free in the Boussinesq model — that is
+  exactly Stage R′ — so this is a result about the dyadic model *family*, with the Boussinesq branch
+  located at `e = 2` and the Cheskidov branch below `e = 0`.
 - **Untruncated formalization of the Stage-R model.** Certifies rather than discovers: the
   truncation is the *dangerous* direction (it removes the enstrophy sink, which is why the Stage-O′
   bound is only linear in `T`), so the untruncated ladder should be at least as regular. Needs an
@@ -1103,3 +1176,14 @@ the bottom of each file.
 16. **`zpow_right_injective₀` exists at this pin** (`0 < a`, `a ≠ 1`): it gives
     `a^m = a^n → m = n` for `m n : ℤ`, hence `Function.Injective dyadicWeight` in one line. No
     detour through `Real.log` is needed.
+17. **Don't reach for `Real.rpow` to state an interpolation.** Half-integer exponents like
+    `H^{1+e/2}` and `E^{e/2}` can always be *squared* away: `D_e ≥ H^{1+e/2}/E^{e/2}` ⟺
+    `H^{2+e} ≤ D_e²·E^e`, and with `e : ℤ` every exponent there is an integer. The `rpow`-free route
+    (`Cascade/DissipationThreshold.lean`'s `weighted_cauchy_schwarz` + `weightedEnstrophy_sq_le` →
+    `dissipation_interp_sq`) is short; the `rpow` route is a coercion swamp and cost one subagent its
+    whole budget. Related trap, worth checking on any hand-verified inequality: the **quadratic**
+    domination `D_e ≥ H²/E` (homogeneity 2) and the **interpolated** `D_e ≥ H^{1+e/2}/E^{e/2}`
+    (homogeneity `1+e/2`) are different statements that coincide only at `e = 2`. Conflating them
+    produces "counterexamples" to claims that are true — `u = (0,0,3,0)`, `e = 1` gives
+    `D_1·E = 5184 = H^{3/2}·√E` (equality, so the interpolated bound holds) while
+    `D_1·E = 5184 < 20736 = H²` (so the quadratic one fails). Both facts, no contradiction.
