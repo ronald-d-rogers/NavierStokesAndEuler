@@ -1,4 +1,4 @@
-import Criticality.Bernstein
+import Cascade.Bernstein
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import Mathlib.Analysis.Normed.Module.FiniteDimension
 
@@ -7,7 +7,7 @@ set_option maxHeartbeats 1000000
 /-!
 # Bernstein's inequality: the scaled `L² → L∞` and gradient forms (Pillar A, rungs A2, A3)
 
-Starting from `Criticality.Bernstein.bernstein`, which says that for a Schwartz function `f`
+Starting from `Cascade.Bernstein.bernstein`, which says that for a Schwartz function `f`
 whose Fourier transform is supported in `ball (0 : V) N`,
 
     ‖f‖_∞ ≤ √(volume (ball 0 N)) · ‖f‖₂,
@@ -19,7 +19,7 @@ power `N^{d/2}` (A2), and with the Fourier-of-derivative identity
 `‖∇f‖_∞ ≲ N^{1 + d/2} · ‖f‖₂` (A3).
 
 Here `V` is a finite-dimensional real inner product space and `F` is a complex inner-product
-space (the latter is required for Plancherel, cf. `Criticality/PROGRESS.md`).
+space (the latter is required for Plancherel, cf. `Cascade/PROGRESS.md`).
 -/
 
 noncomputable section
@@ -31,7 +31,7 @@ attribute [local irreducible] Real.rpow
 attribute [local irreducible] MeasureTheory.Lp.fourierTransformₗᵢ
 attribute [local irreducible] SchwartzMap.fourierTransformCLM
 
-namespace Criticality
+namespace Cascade
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] [Nontrivial V]
@@ -237,11 +237,11 @@ theorem bernstein_gradient [CompleteSpace F] (f : 𝓢(V, F)) (N : ℝ) (hN : 0 
             ring)
   simpa [SchwartzMap.fderivCLM_apply] using hx
 
-end Criticality
+end Cascade
 
-#print axioms Criticality.sqrt_volume_ball_eq_sqrt_volume_unitBall_mul
-#print axioms Criticality.bernstein_L2_to_Linf
-#print axioms Criticality.abs_inner_mul_norm_le
-#print axioms Criticality.norm_toLp_one_fourier_lineDeriv_le
-#print axioms Criticality.bernstein_lineDeriv
-#print axioms Criticality.bernstein_gradient
+#print axioms Cascade.sqrt_volume_ball_eq_sqrt_volume_unitBall_mul
+#print axioms Cascade.bernstein_L2_to_Linf
+#print axioms Cascade.abs_inner_mul_norm_le
+#print axioms Cascade.norm_toLp_one_fourier_lineDeriv_le
+#print axioms Cascade.bernstein_lineDeriv
+#print axioms Cascade.bernstein_gradient

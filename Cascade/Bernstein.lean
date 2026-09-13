@@ -1,4 +1,4 @@
-import Criticality.ConcentrationBarrier
+import Cascade.ConcentrationBarrier
 import Mathlib.MeasureTheory.Integral.MeanInequalities
 
 set_option maxHeartbeats 1000000
@@ -30,7 +30,7 @@ attribute [local irreducible] Real.rpow
 attribute [local irreducible] MeasureTheory.Lp.fourierTransformₗᵢ
 attribute [local irreducible] SchwartzMap.fourierTransformCLM
 
-namespace Criticality
+namespace Cascade
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
@@ -162,7 +162,7 @@ theorem bernstein [CompleteSpace F] (f : 𝓢(V, F)) (N : ℝ)
     _ ≤ Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖(𝓕 f).toLp 2 volume‖ := h2
     _ = Real.sqrt (volume (Metric.ball (0 : V) N)).toReal * ‖f.toLp 2 volume‖ := by rw [h3]
 
-end Criticality
+end Cascade
 
-#print axioms Criticality.norm_toLp_one_le_sqrt_measure_mul_norm_toLp_two
-#print axioms Criticality.bernstein
+#print axioms Cascade.norm_toLp_one_le_sqrt_measure_mul_norm_toLp_two
+#print axioms Cascade.bernstein

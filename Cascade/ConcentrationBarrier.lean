@@ -33,7 +33,7 @@ open scoped FourierTransform SchwartzMap Topology
 -- so that elaborating `𝓕 f` in proofs does not trigger a heartbeat explosion.
 attribute [local irreducible] SchwartzMap.fourierTransformCLM
 
-namespace Criticality
+namespace Cascade
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
@@ -58,7 +58,7 @@ theorem pointwise_le_L1_fourier [CompleteSpace F] (f : 𝓢(V, F)) (x : V) :
   have h := fourierInv_apply_le_toLp_one (𝓕 f) x
   rwa [FourierTransform.fourierInv_fourier_eq] at h
 
-end Criticality
+end Cascade
 
-#print axioms Criticality.fourierInv_apply_le_toLp_one
-#print axioms Criticality.pointwise_le_L1_fourier
+#print axioms Cascade.fourierInv_apply_le_toLp_one
+#print axioms Cascade.pointwise_le_L1_fourier

@@ -12,7 +12,7 @@ with an energy-conserving nonlinear coupling `C_k` and viscosity `ν · 2^{2k}`:
 * **Energy identity:** if the coupling conserves energy (`Σ u_k C_k = 0`), then the
   energy `E = Σ u_k²` dissipates exactly at the viscous rate `−2ν Σ 2^{2k} u_k²`.
 * **The obstruction:** Pillar A's Bernstein gives an unforced lacunary cascade a transfer
-  rate `O(N^{3/2})` (the `d = 3` exponent `N^{d/2}` of `Criticality.bernstein_L2_to_Linf`),
+  rate `O(N^{3/2})` (the `d = 3` exponent `N^{d/2}` of `Cascade.bernstein_L2_to_Linf`),
   while dissipation is `O(N²)`. For `N ≥ 1`, `N^{3/2} ≤ N²`, so dissipation dominates and
   the cascade cannot self-sustain.
 

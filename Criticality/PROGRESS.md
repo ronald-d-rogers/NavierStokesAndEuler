@@ -17,6 +17,12 @@ Where we are now. This file changes as we work. The *target* is `PLAN.md`; the
 
 ## Proved (standard axioms only)
 
+> **Relocation note (Pillar A).** `ConcentrationBarrier`, `Bernstein`, and
+> `BernsteinGrowth` have been **relocated to the `Cascade/` library** (namespace
+> `Cascade`). The `Criticality` library re-exports them via
+> `Criticality/BernsteinExport.lean`, so the `Criticality.*` names below remain
+> available with the same bodies; the implementations now live in `Cascade/`.
+
 `Criticality/ConcentrationBarrier.lean`:
 
 ```lean

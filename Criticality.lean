@@ -1,1 +1,1 @@
-import Criticality.ConcentrationBarrier
+import Criticality.BernsteinExport

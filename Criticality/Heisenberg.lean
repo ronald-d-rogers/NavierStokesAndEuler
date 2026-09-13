@@ -1,4 +1,4 @@
-import Criticality.ConcentrationBarrier
+import Cascade.ConcentrationBarrier
 import Mathlib.Analysis.Distribution.SchwartzSpace.Deriv
 import Mathlib.MeasureTheory.Integral.MeanInequalities
 
