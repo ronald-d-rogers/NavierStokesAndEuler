@@ -40,8 +40,10 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > **finite-time blowup at dissipation degree `e = 0`** — no globally-defined solution of the
 > truncated chain exists above the explicit threshold `(2ν/c)²` with `c = 27√35/400`. So the model
 > family exhibits a genuine `B ∧ O` after all: **regular at `e ≥ 2`, singular at `e = 0`**, with
-> `e = 1` open. (`e = 0` is outside Cheskidov's `α > 0` hypotheses, so that endpoint is our theorem,
-> not his.)
+> `e = 1` marginal for our barrier (the two homogeneities tie there, at Cheskidov's regularity
+> threshold `α = 1/2` — regularity at that exponent is known by other means, so it is a limitation
+> of the method, not an open problem). (`e = 0` is outside Cheskidov's `α > 0` hypotheses, so that
+> endpoint is our theorem, not his.)
 > `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
@@ -1114,7 +1116,7 @@ is outside his hypotheses. We follow his argument and formalize the endpoint he 
 | dissipation degree `e` | `α = e/2` | status |
 |---|---|---|
 | `e ≥ 2` | `α ≥ 1` | **no blowup** — enstrophy barrier closes; model's own exponent (`Cascade/DissipationThreshold.lean`) |
-| `e = 1` | `α = 1/2` | **open** — the two homogeneities tie exactly (Cheskidov's regularity threshold) |
+| `e = 1` | `α = 1/2` | **marginal for our method** — the two homogeneities tie exactly. This is Cheskidov's regularity threshold and regularity at `α ≥ 1/2` is known by other means, so this row is a limitation of the enstrophy barrier, **not** an open problem |
 | `e = 0` | `α = 0` | **blowup for large data** — the theorem above |
 
 So the model family exhibits a genuine `B ∧ O` contrast: the same couplings, with the dissipation
@@ -1134,10 +1136,12 @@ remaining directions all *leave* that model.
 
 - **Blowup below the threshold (the positive half).** **DONE at `e = 0`** — see the
   blowup section above: `no_global_solution_degree_zero` in `Cascade/BlowupDegreeZero.lean`.
-  What remains here is the *interior* of the range: `e = 1` is still open, and for fractional `e`
-  the blowup should hold throughout `0 < α < 1/3` (Cheskidov's theorem) — reaching it needs
-  real exponents (`Real.rpow`) since `dyadicWeight` is `zpow`, and integer `e` cannot represent that
-  interval. The positivity ingredient (`PositivityDegreeE`) is already general in `e`, and
+  What remains here is *fractional* `e`: the blowup should hold throughout `0 < α < 1/3`
+  (Cheskidov's theorem, untruncated), and reaching that interval needs real exponents
+  (`Real.rpow`) since `dyadicWeight` is `zpow` — integer `e` cannot represent it, and `e = 0` is
+  its integer endpoint. (`e = 1` needs no separate treatment: our barrier is marginal there, but
+  regularity at `α = 1/2` is Cheskidov's.) The positivity ingredient (`PositivityDegreeE`) is
+  already general in `e`, and
   `inverted_holder` already covers every integer `e ≤ 0`; the only `e = 0`-specific input is that the
   two norms coincide there. *Fidelity:* the dial is **not** free in the Boussinesq model — that is
   exactly Stage R′ — so this is a result about the dyadic model *family*, with the Boussinesq branch
