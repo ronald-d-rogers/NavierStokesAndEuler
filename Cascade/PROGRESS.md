@@ -27,7 +27,10 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > the **enstrophy/`H¹`** norm) and `Cascade/ScaleObstruction.lean` (the frequency-localized
 > version, tied to Palasek's `N^{d/2}`-vs-`N²` comparison). Stage **B** is
 > `Cascade/ForcedModel.lean` — the forced model frozen so `f ≡ 0` recovers the unforced one, with
-> both forced negatives (no finite-time energy blowup, no finite-time enstrophy blowup).
+> both forced negatives (no finite-time energy blowup, no finite-time enstrophy blowup), and
+> Stage **B′** is `Cascade/BuoyancySign.lean` — `|κ|` replaces `κ`, dropping the `0 ≤ κ` hypothesis
+> from eleven statements, so **no finite-time blowup for any sign of `κ`** either. The truncated
+> Stage-R model is therefore *closed*: no blowup, any `κ`, forced or not.
 > `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
@@ -65,6 +68,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/EnstrophyBound.lean` | stage O′ — capstone: no finite-time `H¹` blowup |
 | `Cascade/ScaleObstruction.lean` | stage O′ — frequency-localized dissipation dominance (Palasek, shell form) |
 | `Cascade/ForcedModel.lean` | stage B — the forced model; forced energy and enstrophy bounds (both negative) |
+| `Cascade/BuoyancySign.lean` | stage B′ — `\|κ\|` replaces `κ`: no-blowup for **every** sign of `κ` (11 statements re-proved) |
 | `Cascade/BernsteinTransfer.lean` | the Bernstein `N^{d/2}` exponent is dominated by dissipation |
 | `Cascade/ConcentrationBarrier.lean` | Bernstein chain, part 1 (pointwise `≤ ‖𝓕 f‖₁`) |
 | `Cascade/Bernstein.lean` | Bernstein chain, part 2 (`‖f‖∞ ≤ √(vol ball) ‖f‖₂`) |
@@ -74,7 +78,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
-`ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
+`BuoyancySign`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
 
 ---
 
@@ -888,23 +892,121 @@ Honest limitations of the bounds above:
   `Ψ = H + (κ/2μ)S` once `h ≠ 0`.
 - As always: a model. Nothing here is a statement about the Boussinesq PDE.
 
+### Stage B′ — the sign of `κ` is irrelevant (`Cascade/BuoyancySign.lean`)
+
+Every no-blowup theorem above assumed `0 ≤ κ`. That hypothesis was a **statement artifact**, not
+mathematics: the bounds were written `κ · Σ_k u_k θ_k ≤ κ · √E · √S`, which is false for `κ < 0`
+(the correct Cauchy–Schwarz bound is two-sided: `|Σ_k u_k θ_k| ≤ √E √S`). It entered the proofs only
+through `mul_le_mul_of_nonneg_left`. The sign-free replacement is
+
+```lean
+theorem buoyancy_energy_le_abs (κ : ℝ) (u θ : ℤ → ℝ) (N : ℕ) :
+    κ * (∑ k ∈ Finset.range N, u k * θ k)
+      ≤ |κ| * (Real.sqrt (velocityEnergy u N) * Real.sqrt (entropy θ N))
+
+theorem buoyancy_enstrophy_le_abs (κ : ℝ) (u θ : ℤ → ℝ) (N : ℕ) :
+    κ * (∑ k ∈ Finset.range N, dyadicWeight (2*k) * u k * θ k)
+      ≤ |κ| * (Real.sqrt (enstrophy u N) * Real.sqrt (tempEnstrophy θ N))
+```
+
+and with `|κ| ≥ 0` every downstream engine applies verbatim (`ν`-Grönwall,
+`energy_le_energyBound_of_rate_le`, `energy_le_max_of_rate_le`, the Young absorptions, the barrier
+`le_of_deriv_le_const_sub_sq`). **Eleven statements are re-proved with `κ` arbitrary**, dropping
+`0 ≤ κ` entirely:
+
+```lean
+velocity_energy_pairing_le_abs / velocity_energy_rate_le_of_solution_abs
+truncated_unforced_energy_bounded_abs / truncated_unforced_energy_le_max_abs
+forced_velocity_pairing_le_abs / forced_energy_rate_le_abs
+forced_energy_rate_le_of_entropy_le_abs / forced_truncated_energy_bounded_abs
+forced_energy_le_max_unforced_temperature_abs
+enstrophy_pairing_le_abs / enstrophy_rate_le_of_solution_abs
+enstrophyLyapunov_deriv_le_abs / truncated_unforced_enstrophy_bounded_abs
+forced_enstrophy_rate_le_abs / forced_truncated_enstrophy_bounded_abs
+```
+
+**Verdict: unstable stratification (`κ < 0`) does not produce a finite-time blowup either**, in
+energy or enstrophy, forced or unforced. So **no finite-time blowup in the frozen truncated model
+for any `κ`** — the missing piece of "no matter what" in this model. No `κ < 0` hypothesis was
+needed anywhere, so no counterexample exists or was found.
+
+**Why sign cannot matter here.** Buoyancy is a *bounded forcing*, never an amplifier. The temperature
+ladder's own equation does not involve `κ`, and its energy is non-increasing (`entropy_antitone`),
+so buoyancy enters the velocity equation linearly: `E' ≤ 2(|κ|√S + √F)√E − 2νE`, the same logistic
+shape as Stage B. In the enstrophy budget it contributes only `|κ|√H√T`, homogeneity `1/2` in `H` —
+the same order as the Stage-B force work, below the cubic transfer (`3/2`) and far below the
+quadratic dissipation (`2`). The Stage O′ Lyapunov `Ψ = H + (κ/2μ)S` is itself sign-free (the
+`+κT` source cancels `−κT` for either sign); the *only* place the sign survives is bookkeeping:
+
+```lean
+theorem enstrophyLyapunov_deriv_le_abs … :
+    2*(∑ 4^k u_k · du_k/dt) + (κ/(2μ))*(2*(∑ θ_k · dθ_k/dt))
+      ≤ enstrophyYoungConst ν κ E_max + (|κ| - κ) * T_max
+```
+
+with `(|κ| − κ)·T_max = 0` exactly when `κ ≥ 0` — so at `κ ≥ 0` this reduces to the existing
+`enstrophyLyapunov_deriv_le`. That additive constant is the honest cost of unstable stratification,
+and it is what keeps the barrier closing (it is a *constant*, not an `H`-dependent term). Uniform
+recovery of `H` from `Ψ` uses `H ≤ Ψ + (|κ|/2μ)S(0)`.
+
+**A deflationary corollary.** The two-species (Boussinesq) structure is **inert for the regularity
+question** in this model. The temperature ladder is passive: it feeds the velocity equation a
+bounded amount of energy and cannot drive a singularity whatever the sign of `κ`. All the action is
+in the single-species cascade and its dissipation degree — which is what Stage R′ and Cheskidov's
+thresholds are about.
+
+Non-vacuity is machine-checked at `κ = −1` and mirrored at `κ = +1` (which is *not* excluded): at
+`u = (0,1,3,0)`, `θ = (0,1,2,0)`, `f = (0,1,1,0)`, `N = 2` (`E = 10`, `S = 5`, `H = 37`, `T = 17`),
+the energy buoyancy bound is `−7 ≤ √10·√5 ≈ 7.07` and the enstrophy one `−25 ≤ √37·√17 ≈ 25.08`,
+both strict and with the right sign for the `|κ|` bound to be non-trivial.
+
+Two hypothesis notes: the *unforced* enstrophy route keeps `0 < μ` because the Lyapunov bookkeeping
+divides by `μ` (a `μ`-condition, not a `κ`-condition); the *forced* enstrophy route needs no `μ` at
+all, matching `ForcedModel.lean`.
+
 ---
 
 ## Open — where a dyadic blowup could still live
 
+The **frozen truncated model is now closed**: no finite-time blowup for any `κ`, forced or unforced,
+in energy or enstrophy (Stages O, O′, B, B′). Untruncated it is cited-only (Cheskidov). So the
+remaining directions all *leave* that model.
+
+- **The dissipation-degree dial (recommended next).** `Cascade/DissipationDegree.lean` already
+  defines `velocityRHSDegree` for a general degree `d` (`d = 2α`), so the infrastructure exists, and
+  the target is the **phase diagram in `d`** for the truncated model.
+  *Upper side:* for `d` large the enstrophy barrier closes — no blowup — and the Stage O′/B proofs
+  should extend with `d`-dependent constants; the work is the weighted Cauchy–Schwarz step.
+  *Lower side:* for `d` small the barrier must fail — at low `d` the low modes are barely damped,
+  dissipation degenerates from quadratic towards linear in `H`, and the cubic production `6H√H`
+  runs away. Cheskidov's route is the inverted Hölder lemma plus a Riccati `Ḣ ≳ H^{3/2}`
+  (`Riccati.lean` has the engine; the inverted Hölder lemma is a *finite-sum* inequality, the easy
+  case). Cheskidov's thresholds are `α ≥ 1/2` regular, `α < 1/3` blowup, gap between, i.e.
+  `d ≥ 1` and `d < 2/3`.
+  *Payoff:* a genuine blowup theorem, hence a real `B ∧ O` contrast **inside this library** — one
+  model family, the dissipation degree deciding. *Risk:* the positivity/monotonicity step
+  (`u_n ≥ 0`, from Cheskidov's comparison principle) that makes the cubic production positive.
+  *Fidelity:* the dial is **not** free in the Boussinesq model — that is exactly Stage R′ — so this
+  is a result about the dyadic model *family*, with the Boussinesq branch located at `d = 2`.
+- **Untruncated formalization of the Stage-R model.** Certifies rather than discovers: the
+  truncation is the *dangerous* direction (it removes the enstrophy sink, which is why the Stage-O′
+  bound is only linear in `T`), so the untruncated ladder should be at least as regular. Needs an
+  infinite-sum layer the library lacks entirely: a phase space (`Summable (fun k => u_k²)`,
+  `Summable (fun k => 4^k u_k²)`), flux telescoping to `±∞` (energy conservation as "the boundary
+  flux vanishes"), `tsum` versions of the estimates, and a solution concept on the infinite lattice.
+  Value: removes the citation on the headline claim.
 - **Stage H's layer model as an ODE system.** `Cascade/Layers.lean` is the *realisation* (the model
   plus its one-way/triangular structure), not a blowup statement. Whether the triangular layer
   system blows up as an ODE system is untouched by Stage B, which is about the Stage-R model.
   Blockers on record: what is actually free at each layer (the initial wavevector `ζ_q(0)`, not the
   common rotation `α'`), and whether a uniform-in-`q` lower bound on the growth rate `√(ab)` can be
-  proved — without it the infinite-octave growth does not follow.
-- **A weaker-dissipation dyadic model** (Cheskidov's `α < 1/3`). Guaranteed-true positive half, but
-  it is a different model: one species, fractional dissipation, and it needs the **infinite lattice**
-  statement shape (`tsum`, "not locally integrable"), which nothing in this library currently has.
-  Its proof ingredients — an inverted Hölder lemma, a corrected Lyapunov functional, and a Riccati
-  `Ḣ ≳ H^{3/2}` — are close to machinery already here (`Riccati.lean`, the cubic production in
-  `Enstrophy.lean`, `transfer_le_dissipation` read backwards), so the estimate side is cheap; the
-  statement-shape side is the real cost.
+  proved — without it the infinite-octave growth does not follow. Highest ambition, highest chance
+  of nothing; the only route that is about AB's actual construction.
+- **The `α = 2/5` sharp-estimate statement.** Formalize that the dissipation-dominance estimate is
+  sharp at the exponent whose nonlinear estimates match 3D Navier–Stokes — a machine-checked version
+  of "why this dyadic model is easier than 3D NS". Cheap, and the honest capstone to the fidelity
+  story. Note `α = 2/5` lies in Cheskidov's *open gap*, so only the estimate can be formalized, not
+  the verdict.
 - **Stage B for the AB construction proper.** Unchanged and untouched: AB build the force together
   with the solution, and their blowup is for the PDE, not a shell model.
 
