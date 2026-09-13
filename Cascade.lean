@@ -4,6 +4,8 @@ import Cascade.BoussinesqScaling
 import Cascade.BoussinesqEnergy
 import Cascade.Lacunary
 import Cascade.Amplitude
+import Cascade.Phase
+import Cascade.PhaseGrowth
 import Cascade.Obstruction
 import Cascade.Gronwall
 import Cascade.NoBlowup

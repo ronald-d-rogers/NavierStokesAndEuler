@@ -2,12 +2,15 @@
 
 Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 
-> **Snapshot:** branch `dyadic-cascade`. Stages **S**, **R**, **A**, **O**, and **O′** are done;
-> only **B** (forced blowup) remains. Stage **R** is `Cascade/Boussinesq.lean` (the frozen
-> two-species dyadic Boussinesq model), plus `Cascade/BoussinesqScaling.lean` (scaling covariance)
-> and `Cascade/BoussinesqEnergy.lean` (the two-species energy balance). Stage **A** is
-> `Cascade/Lacunary.lean` (the lacunary ansatz and the *exact* amplitude-ODE reduction) plus
-> `Cascade/Amplitude.lean` (the Rayleigh–Taylor growth rate). Stage **O** is
+> **Snapshot:** branch `dyadic-cascade`. Stages **S**, **R**, **A**, **G** (phase), **O**, and
+> **O′** are done; only **B** (forced blowup) remains. Stage **R** is `Cascade/Boussinesq.lean`
+> (the frozen two-species dyadic Boussinesq model), plus `Cascade/BoussinesqScaling.lean`
+> (scaling covariance) and `Cascade/BoussinesqEnergy.lean` (the two-species energy balance).
+> Stage **A** is `Cascade/Lacunary.lean` (the lacunary ansatz and the *exact* amplitude-ODE
+> reduction) plus `Cascade/Amplitude.lean` (the Rayleigh–Taylor growth rate). Stage **G** is
+> `Cascade/Phase.lean` (the wavevector phase, the steering lemma, and the steerable cosine
+> coupling) plus `Cascade/PhaseGrowth.lean` (the consequence: the phase selects growth vs
+> oscillation and the growth rate is fully controllable). Stage **O** is
 > `Cascade/Obstruction.lean` (the pointwise obstruction), `Cascade/Gronwall.lean` (the abstract
 > Grönwall engine) and `Cascade/NoBlowup.lean` (capstone: no finite-time **energy** blowup).
 > Stage **O′** is `Cascade/Enstrophy.lean` (the enstrophy budget), `Cascade/Riccati.lean` (the
@@ -37,6 +40,8 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/BoussinesqEnergy.lean` | stage R — two-species energy balance (general + frozen) |
 | `Cascade/Lacunary.lean` | stage A — lacunary ansatz + exact amplitude-ODE reduction |
 | `Cascade/Amplitude.lean` | stage A — Rayleigh–Taylor growth of the amplitude system |
+| `Cascade/Phase.lean` | stage G — wavevector phase, steering lemma, steerable cosine coupling |
+| `Cascade/PhaseGrowth.lean` | stage G′ — the phase selects growth vs oscillation; the rate is fully controllable |
 | `Cascade/Obstruction.lean` | stage O — pointwise obstruction inequalities |
 | `Cascade/Gronwall.lean` | stage O — abstract Grönwall no-blowup engine |
 | `Cascade/NoBlowup.lean` | stage O — capstone: no finite-time energy blowup |
@@ -526,6 +531,74 @@ shorter and more transparent. The transfer/dissipation dichotomy is captured by 
 
 ---
 
+## Done — Stage G, the phase (`Cascade/Phase.lean`)
+
+`Cascade/Lacunary.lean` reduced the model to the amplitude pair but **deleted the wave's
+geometry**: the buoyancy coupling was the frozen number `b = 2ⁿκ`. Stage G restores the
+wavevector `ζ` with AB's own page-4 dynamics (their eq. (3.2)):
+
+```
+ζ̇ = −Dᵀζ,   Θ̇ = −(Jζ·G)/(λ|ζ|²)·Ω,   Ω̇ = λζ₀·Θ.
+```
+
+* **The steering lemma.** For the `α̇J` part of AB's background gradient (`D_{<q}`, eq. (3.3)),
+  `D = α' • rotJ` and `Dᵀ = −D`, so `ζ̇ = α' • (Jζ)`, solved by `ζ(t) = rotR(α(t))·ζ(0)`:
+  `rotJ * rotR α` is the angular derivative of `rotR α` and `rotJ² = −1`, i.e. `rotR α = exp(αJ)`.
+  Stated componentwise (`phase_steering_component`) because `Matrix (Fin 2) (Fin 2) ℝ` has no norm
+  instance in this pin.
+* **The coupling is a steerable cosine.**
+  ```lean
+  theorem phase_coupling_cosine (λ α : ℝ) (ζ₀ : Fin 2 → ℝ) :
+      abVortCoeff λ (rotR α *ᵥ ζ₀) = λ * (ζ₀ 0 * Real.cos α - ζ₀ 1 * Real.sin α)
+  theorem phase_coupling_bound (λ α : ℝ) (ζ₀ : Fin 2 → ℝ) :
+      |abVortCoeff λ (rotR α *ᵥ ζ₀)| ≤ |λ| * l2norm ζ₀
+  theorem phase_flip (λ c : ℝ) (hc : 0 < c) :
+      abVortCoeff λ (rotR 0 *ᵥ ![c,0]) = λ * c ∧ abVortCoeff λ (rotR Real.pi *ᵥ ![c,0]) = -(λ * c)
+  theorem phase_flip_quantitative (λ c : ℝ) (hc : 0 < c) (y : ℝ) (hy : |y| ≤ |λ| * c) :
+      ∃ α, abVortCoeff λ (rotR α *ᵥ ![c,0]) = y
+  ```
+  a half-turn flips the sign, and the coupling sweeps the whole interval `[-|λ|c, |λ|c]`.
+* `ab_product`: the product of AB's two coefficients is independent of `λ`, and
+  `rotJ_mulVec_dot_rotR`: AB's temperature numerator is invariant under a *simultaneous* rotation
+  of `ζ` and `G` (with `G` fixed it is **not** invariant — the steering changes the angle, hence
+  the temperature coupling too).
+
+### Stage G′ — the consequence (`Cascade/PhaseGrowth.lean`)
+
+The scalar obstruction assumes a *constant-coefficient* amplitude pair: the sign of `ab` is
+frozen, so growth vs oscillation is decided by the initial data. With the phase, `b` is steerable,
+and that is now a theorem. Taking `a` fixed and nonzero and `ζ₀ = ![c,0]`:
+
+```lean
+theorem phase_controls_growth_sign (a lam c : ℝ) (hc : 0 < c) (ha : a ≠ 0) (hlam : lam ≠ 0) :
+    ∃ α₁ α₂, a * abVortCoeff lam (rotR α₁ *ᵥ ![c,0]) > 0
+           ∧ a * abVortCoeff lam (rotR α₂ *ᵥ ![c,0]) < 0
+
+theorem phase_selects_growth_or_oscillation (a lam c : ℝ) (ha : 0 < a) (hlam : 0 < lam) (hc : 0 < c) :
+    (0 < a * b(0) ∧ 0 < Real.sqrt (a * b(0)))
+    ∧ (a * b(π) < 0 ∧ Real.sqrt (a * b(π)) = 0)          -- b(α) := abVortCoeff lam (rotR α *ᵥ ![c,0])
+
+theorem phase_controls_growth_rate (a lam c : ℝ) (ha : 0 < a) (hlam : 0 < lam) (hc : 0 < c)
+    (r : ℝ) (hr0 : 0 ≤ r) (hr : r ≤ Real.sqrt (a * lam * c)) :
+    ∃ α, Real.sqrt (a * abVortCoeff lam (rotR α *ᵥ ![c,0])) = r
+```
+
+**The finding.** The sign of the growth product is steerable whatever `a` is; aligned data
+(`α = 0`) gives `ab > 0` and positive growth rate while the *same data* after a half turn
+(`α = π`) gives `ab < 0` and rate `0` — growth vs oscillation is selected by the phase, not by
+the initial data; and as `α` turns, the rate sweeps the **whole** interval
+`[0, √(a λ c)]`, with the maximum at the aligned wavevector. So the scalar model deleted exactly
+the interaction that controls the instability. This is also the formal setting of AB's control
+problem: Stage B's force must *hold* the coupling favourable, not merely excite a mode.
+
+**Scope.** Only `b` is treated as steerable here; in AB the temperature coefficient
+`a = abTempCoeff λ ζ G` also depends on `ζ` (with `G` fixed, `(Jζ)·G` is *not* invariant when
+`ζ` rotates — cf. `rotJ_mulVec_dot_rotR`), so steering both together, and the full per-octave
+realisation (one wavevector per octave, `G`/`D` accumulated from the lower octaves as in AB
+eq. (3.3)), is the next step and is not claimed.
+
+---
+
 ## Not started
 
 - **Stage B** — forced blowup. Needs the *forced* model fixed first: force support, and whether
@@ -616,3 +689,10 @@ the bottom of each file.
     `Cascade/NoBlowup.lean` provides `finset_sum_apply` for this. `antitone_of_hasDerivAt_nonpos`
     lives in `Mathlib.Analysis.Calculus.Deriv.MeanValue` (not re-exported by
     `Mathlib.Analysis.Calculus.MeanValue`).
+13. **`‖·‖` on `Fin 2 → ℝ` is the *sup* norm**, not the Euclidean norm (`Pi.norm_def`), so
+    `‖rotR α *ᵥ ζ₀‖ = ‖ζ₀‖` is **false** — a rotation does not preserve the sup norm
+    (`Cascade/Phase.lean`'s `rotR_norm_preserving_supNorm_counterexample`: `ζ₀ = ![1,1]`,
+    `α = π/4`). Use an explicit Euclidean length (`Cascade.Phase.l2norm`, AB's `|ζ|`).
+14. **`Matrix (Fin 2) (Fin 2) ℝ` has no topological/norm instance** in this pin (deliberately:
+    matrix multiplication is not sup-norm submultiplicative), so `HasDerivAt` is ill-typed at
+    matrix type. Take derivatives componentwise (`Cascade.Phase.phase_steering_component`).
