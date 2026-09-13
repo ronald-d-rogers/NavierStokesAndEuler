@@ -10,7 +10,9 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > reduction) plus `Cascade/Amplitude.lean` (the Rayleigh–Taylor growth rate). Stage **G** is
 > `Cascade/Phase.lean` (the wavevector phase, the steering lemma, and the steerable cosine
 > coupling) plus `Cascade/PhaseGrowth.lean` (the consequence: the phase selects growth vs
-> oscillation and the growth rate is fully controllable). Stage **O** is
+> oscillation and the growth rate is fully controllable) and `Cascade/PhaseControl.lean` (steering
+> *both* coefficients — the exact product formula, its range, and the stably stratified case where
+> the phase buys nothing). Stage **O** is
 > `Cascade/Obstruction.lean` (the pointwise obstruction), `Cascade/Gronwall.lean` (the abstract
 > Grönwall engine) and `Cascade/NoBlowup.lean` (capstone: no finite-time **energy** blowup).
 > Stage **O′** is `Cascade/Enstrophy.lean` (the enstrophy budget), `Cascade/Riccati.lean` (the
@@ -42,6 +44,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/Amplitude.lean` | stage A — Rayleigh–Taylor growth of the amplitude system |
 | `Cascade/Phase.lean` | stage G — wavevector phase, steering lemma, steerable cosine coupling |
 | `Cascade/PhaseGrowth.lean` | stage G′ — the phase selects growth vs oscillation; the rate is fully controllable |
+| `Cascade/PhaseControl.lean` | stage G″ — steering both coefficients: exact product formula, range, and the stable case |
 | `Cascade/Obstruction.lean` | stage O — pointwise obstruction inequalities |
 | `Cascade/Gronwall.lean` | stage O — abstract Grönwall no-blowup engine |
 | `Cascade/NoBlowup.lean` | stage O — capstone: no finite-time energy blowup |
@@ -606,7 +609,47 @@ the Rayleigh–Taylor mode from igniting at all. It does **not** raise the coupl
 either — `a·λ·c` is the coupling the scalar model already had at the aligned wavevector; the
 phase lets the system *reach* it. The one open route by which the phase could touch the
 absorption threshold — whether steering `a` as well can move the `3H√H` coefficient itself — is
-unexplored.
+now treated in Stage G″ below.
+
+---
+
+### Stage G″ — controlling **both** coefficients (`Cascade/PhaseControl.lean`)
+
+Stage G′ held the temperature coefficient `a` fixed and steered only `b`. AB steers both, and that
+changes the answer. With `ζ(α) = rotR α · ![c,0]` and `G = ![g₀,g₁]`:
+
+```lean
+theorem ab_both_formula (λ c : ℝ) (hλ : λ ≠ 0) (hc : 0 < c) (G : Fin 2 → ℝ) (α : ℝ) :
+    abTempCoeff λ (rotR α *ᵥ ![c,0]) G * abVortCoeff λ (rotR α *ᵥ ![c,0])
+      = -(G 1)/2 + (G 0/2) * Real.sin (2*α) - (G 1/2) * Real.cos (2*α)
+
+theorem ab_both_add_pi … : (product at α + π) = (product at α)
+theorem ab_both_range … : -(G 1)/2 - √(G 0²+G 1²)/2 ≤ product ≤ -(G 1)/2 + √(G 0²+G 1²)/2
+theorem ab_both_max_attained … / ab_both_min_attained …        -- both bounds attained
+theorem ab_both_positive_iff (λ c : ℝ) (hλ : λ ≠ 0) (hc : 0 < c) (G : Fin 2 → ℝ) :
+    (∃ α, 0 < product) ↔ (G 0 ≠ 0 ∨ G 1 < 0)
+theorem ab_both_vertical_nonpos … (h0 : G 0 = 0) (h1 : 0 ≤ G 1) : product ≤ 0
+```
+
+**Three consequences, and one correction.**
+
+1. **`λ` and `c` cancel** (`ab_both_eq_of_lambda_c`): the product depends only on the background
+   gradient `G` and the steering angle — neither the coupling strength nor the wavenumber matters
+   for *which* regime you are in.
+2. **Correction to Stage G′.** The product is **`π`-periodic in `α`**: a *half turn leaves it
+   unchanged* (`ab_both_add_pi`). The G′ statement "a half turn flips the coupling" was an artifact
+   of holding `a` fixed — when both coefficients move, the half turn flips `a` and `b` *together*, so
+   `ab` is invariant. The G′ theorems remain true, but they describe a model in which only `b` moves.
+3. **In the stably stratified case the obstruction survives the phase.** The range is exactly
+   `[-(g₁+R)/2, (R−g₁)/2]` with `R = √(g₀²+g₁²)`, so growth is attainable **iff `g₀ ≠ 0` or
+   `g₁ < 0`**, and the maximum rate is `√((R−g₁)/2)`. For a **purely upward** gradient
+   (`G 0 = 0`, `0 ≤ G 1`) the product is `≤ 0` for **every** orientation
+   (`ab_both_vertical_nonpos`): orientation is not a control there. This is the first place in the
+   project where restoring the phase buys nothing — and the natural thing for Stage B's force to
+   have to overcome.
+
+As in G′, this is a statement about the 2×2 amplitude pair and does **not** touch the Stage-O/O′
+enstrophy budget (a magnitude comparison in which phases do not appear).
 
 ---
 
