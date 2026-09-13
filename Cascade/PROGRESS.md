@@ -36,6 +36,12 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > for `e ≥ 2`, ties exactly at `e = 1` (which is Cheskidov's own regularity threshold `α = 1/2`),
 > and the quadratic dissipation domination provably fails for every `e < 2`. The model's own
 > `e = 2` is the **bottom** of the barrier's unconditional range.
+> **And the positive half is now proved too**: `Cascade/BlowupDegreeZero.lean` establishes
+> **finite-time blowup at dissipation degree `e = 0`** — no globally-defined solution of the
+> truncated chain exists above the explicit threshold `(2ν/c)²` with `c = 27√35/400`. So the model
+> family exhibits a genuine `B ∧ O` after all: **regular at `e ≥ 2`, singular at `e = 0`**, with
+> `e = 1` open. (`e = 0` is outside Cheskidov's `α > 0` hypotheses, so that endpoint is our theorem,
+> not his.)
 > `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
@@ -75,6 +81,10 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/ForcedModel.lean` | stage B — the forced model; forced energy and enstrophy bounds (both negative) |
 | `Cascade/BuoyancySign.lean` | stage B′ — `\|κ\|` replaces `κ`: no-blowup for **every** sign of `κ` (11 statements re-proved) |
 | `Cascade/DissipationThreshold.lean` | the dissipation threshold: no blowup for degree `e ≥ 2`; the barrier ties at `e = 1`; quadratic domination provably fails below `e = 2` |
+| `Cascade/PositivityDegreeE.lean` | comparison principle: nonnegative data stay nonnegative (all `e`, forced or not) |
+| `Cascade/BlowupRate.lean` | the Lyapunov growth rate `H' ≥ (27/28)·cubicSum − 2ν·H` at `c₂ = 4/7` |
+| `Cascade/BlowupEngine.lean` | the reversed-Bernoulli engine + the inverted Hölder lemma |
+| `Cascade/BlowupDegreeZero.lean` | **capstone: finite-time blowup at `e = 0`** — no global solution for large nonnegative data |
 | `Cascade/BernsteinTransfer.lean` | the Bernstein `N^{d/2}` exponent is dominated by dissipation |
 | `Cascade/ConcentrationBarrier.lean` | Bernstein chain, part 1 (pointwise `≤ ‖𝓕 f‖₁`) |
 | `Cascade/Bernstein.lean` | Bernstein chain, part 2 (`‖f‖∞ ≤ √(vol ball) ‖f‖₂`) |
@@ -84,8 +94,8 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
-`BuoyancySign`, `DissipationThreshold`, `ScaleObstruction`, `BernsteinTransfer` (and hence the
-Bernstein chain).
+`BuoyancySign`, `DissipationThreshold`, `PositivityDegreeE`, `BlowupRate`, `BlowupEngine`,
+`BlowupDegreeZero`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
 
 ---
 
@@ -1044,23 +1054,94 @@ squaring, which turns every exponent into an integer.
 
 ---
 
+## Done — finite-time blowup at degree `e = 0` (`Cascade/BlowupDegreeZero.lean`)
+
+**The project's first genuine blowup theorem, and the `B` half of `B ∧ O`.** The model is the
+scalar truncated dyadic chain at dissipation degree `e = 0` (uniform damping `ν·u_k`):
+
+```
+u_k' = 2^k (u_{k-1}² − 2 u_k u_{k+1}) − ν u_k,   0 ≤ k < N,   u_{-1} = u_N = 0,   ν ≥ 0
+```
+
+```lean
+def blowupCoeff : ℝ := (27/28) * (holderConst 1 * (7/10) * Real.sqrt (7/10))   -- = 27√35/400 ≈ 0.399335
+def blowupThreshold (ν : ℝ) : ℝ := (2 * ν / blowupCoeff) ^ 2                    -- ≈ 25.08 ν²
+
+theorem no_global_solution_degree_zero (ν : ℝ) (hν : 0 ≤ ν) (μ : ℝ) (N : ℕ) (hN : 1 ≤ N)
+    (u θ : ℝ → ℤ → ℝ) (h : IsUnforcedTruncatedSolutionE ν μ 0 0 N u θ)
+    (h0 : ∀ k, 0 ≤ u 0 k) (hlarge : blowupThreshold ν < lyap (u 0) N (4/7)) :
+    False
+```
+
+In words: **no globally-defined ladder solves the chain from nonnegative data whose initial
+Lyapunov value `lyap(u 0) N (4/7) = Σ_{k<N}2^k u_k(0)² + (4/7)Σ_{k<N}2^k u_k(0)u_{k+1}(0)` exceeds the
+finite threshold `(2ν/c)²`.** The functional is forced to blow up by time `2/(c√y₀ − 2ν)`, so a
+global solution cannot exist — since the predicate asserts differentiability for every real `t`,
+`False` is the correct rendering of finite-time blowup.
+
+### The four pieces, in dependency order
+
+| Piece | File | What it supplies |
+|---|---|---|
+| Positivity | `Cascade/PositivityDegreeE.lean` | nonnegative data ⟹ `∀k, 0 ≤ u t k` (integrating factor; the source `2^k(u_{k-1})²` is a *square*, so no sign info on `k−1` is needed) |
+| Lyapunov growth rate | `Cascade/BlowupRate.lean` | `H' ≥ (27/28)·cubicSum − 2ν·H` at `c₂ = 4/7`, plus `blowupNorm ≥ (7/10)H` |
+| Inverted Hölder | `Cascade/BlowupEngine.lean` | `cubicSum ≥ A·S·√S` with `A = holderConst 1 = √(1/2)`, `S = blowupNorm` |
+| Reversed Bernoulli engine | `Cascade/BlowupEngine.lean`, `BlowupDegreeZero.lean` | `y' ≥ c·y√y − 2ν·y`, `2ν < c√y₀` ⟹ `T ≤ 2/(c√y₀ − 2ν)` |
+
+Chaining: `cubicSum ≥ A(7/10)^{3/2}·H√H`, so `H' ≥ c·H√H − 2ν·H` with
+`c = (27/28)·A·(7/10)^{3/2} = 27√35/400`. Then `f = 1/√y` gives `f' ≤ νf − c/2`, and
+`2ν < c√y₀` makes `f' ≤ −δ` for `δ = c/2 − νf₀ > 0`, so `f` reaches zero at `t = f₀/δ =
+2/(c√y₀ − 2ν)` — contradicting `f > 0`.
+
+**This is our theorem, not Cheskidov's.** His Theorem 5.1 requires `α > 0`; `e = 0` is `α = 0` and
+is outside his hypotheses. We follow his argument and formalize the endpoint he does not cover.
+
+### Two corrections to the brief, both found by the subagents and both load-bearing
+
+1. **The engine needs `0 ≤ ν`.** The bound `T ≤ 2/(c√y₀ − 2ν)` is **false for `ν < 0`** — a
+   machine-checked counterexample (`engine_false_without_nonneg`) exhibits `f t = (3/2)e^{-t} − 1/2`
+   with `c = 1`, `ν = −1`, `f > 0` on `[0, 3/4]` where `3/4 > 2/3`. For `ν ≤ 0` the correct bound is
+   the *larger* `2/(c√y₀)` (`le_of_deriv_ge_mul_sqrt_sub_nonpos`); the unified truth is
+   `2/(c√y₀ − 2·max ν 0)`. The first draft of the brief asserted the `0 ≤ ν`-free version.
+2. **The `7/10` needs the sharp correction bound.** The *exported* `correction_le_blowupNorm` gives
+   only `correction ≤ blowupNorm`, hence `(7/11)·lyap ≤ blowupNorm`, not `(7/10)`. The sharp
+   `correction ≤ (3/4)·blowupNorm` (AM–GM pointwise plus the weight shift `2^k = ½·2^{k+1}` and
+   `u_N = 0`) is re-proved in `BlowupDegreeZero.lean` as `correction_le_three_quarters`, and it is
+   what makes the stated `c` correct. Using `7/11` instead would give a different (smaller) `c`.
+
+### The integer phase diagram, now complete
+
+| dissipation degree `e` | `α = e/2` | status |
+|---|---|---|
+| `e ≥ 2` | `α ≥ 1` | **no blowup** — enstrophy barrier closes; model's own exponent (`Cascade/DissipationThreshold.lean`) |
+| `e = 1` | `α = 1/2` | **open** — the two homogeneities tie exactly (Cheskidov's regularity threshold) |
+| `e = 0` | `α = 0` | **blowup for large data** — the theorem above |
+
+So the model family exhibits a genuine `B ∧ O` contrast: the same couplings, with the dissipation
+degree as the dial, regular at `e ≥ 2` and singular at `e = 0`. Non-vacuity is machine-checked
+throughout: `c = 27√35/400 > 0`; the single-mode instance of `inverted_holder` at `δ₀` has both sums
+equal to `1` with `A = √(1/2) < 1`; the engine bound at `c, ν = 0, y₀ = 1` is `800/(27√35) ≈ 5.008 > 4`;
+and `blowupThreshold 0 = 0 < lyap ladderTwo 2 (4/7) = 25/7`, so the large-data hypothesis is
+satisfiable.
+
+---
+
 ## Open — where a dyadic blowup could still live
 
 The **frozen truncated model is now closed**: no finite-time blowup for any `κ`, forced or unforced,
 in energy or enstrophy (Stages O, O′, B, B′). Untruncated it is cited-only (Cheskidov). So the
 remaining directions all *leave* that model.
 
-- **Blowup below the threshold (the other half of the degree dial).** The *regular* side is done —
-  see the dissipation-threshold section above: no blowup for `e ≥ 2`, and the barrier is
-  exponent-sharp at `e = 1`. What is **not** done is the positive half: a blowup theorem for small
-  `e`. Cheskidov has it for `α < 1/3` (`e < 2/3`, so `e ≤ 0` for integers), and his route is the
-  inverted Hölder lemma plus a Riccati `Ḣ ≳ H^{3/2}` — `Riccati.lean` has the engine, and the
-  inverted Hölder lemma is a *finite-sum* inequality, the easy case. The real obstacle is the
-  positivity/monotonicity step (`u_n ≥ 0`, from Cheskidov's comparison principle) that makes the
-  cubic production positive. *Payoff:* a genuine blowup theorem, hence a real `B ∧ O` contrast
-  **inside this library**. *Fidelity:* the dial is **not** free in the Boussinesq model — that is
+- **Blowup below the threshold (the positive half).** **DONE at `e = 0`** — see the
+  blowup section above: `no_global_solution_degree_zero` in `Cascade/BlowupDegreeZero.lean`.
+  What remains here is the *interior* of the range: `e = 1` is still open, and for fractional `e`
+  the blowup should hold throughout `0 < α < 1/3` (Cheskidov's theorem) — reaching it needs
+  real exponents (`Real.rpow`) since `dyadicWeight` is `zpow`, and integer `e` cannot represent that
+  interval. The positivity ingredient (`PositivityDegreeE`) is already general in `e`, and
+  `inverted_holder` already covers every integer `e ≤ 0`; the only `e = 0`-specific input is that the
+  two norms coincide there. *Fidelity:* the dial is **not** free in the Boussinesq model — that is
   exactly Stage R′ — so this is a result about the dyadic model *family*, with the Boussinesq branch
-  located at `e = 2` and the Cheskidov branch below `e = 0`.
+  located at `e = 2`.
 - **Untruncated formalization of the Stage-R model.** Certifies rather than discovers: the
   truncation is the *dangerous* direction (it removes the enstrophy sink, which is why the Stage-O′
   bound is only linear in `T`), so the untruncated ladder should be at least as regular. Needs an
@@ -1176,14 +1257,34 @@ the bottom of each file.
 16. **`zpow_right_injective₀` exists at this pin** (`0 < a`, `a ≠ 1`): it gives
     `a^m = a^n → m = n` for `m n : ℤ`, hence `Function.Injective dyadicWeight` in one line. No
     detour through `Real.log` is needed.
-17. **Don't reach for `Real.rpow` to state an interpolation.** Half-integer exponents like
-    `H^{1+e/2}` and `E^{e/2}` can always be *squared* away: `D_e ≥ H^{1+e/2}/E^{e/2}` ⟺
-    `H^{2+e} ≤ D_e²·E^e`, and with `e : ℤ` every exponent there is an integer. The `rpow`-free route
-    (`Cascade/DissipationThreshold.lean`'s `weighted_cauchy_schwarz` + `weightedEnstrophy_sq_le` →
-    `dissipation_interp_sq`) is short; the `rpow` route is a coercion swamp and cost one subagent its
-    whole budget. Related trap, worth checking on any hand-verified inequality: the **quadratic**
-    domination `D_e ≥ H²/E` (homogeneity 2) and the **interpolated** `D_e ≥ H^{1+e/2}/E^{e/2}`
-    (homogeneity `1+e/2`) are different statements that coincide only at `e = 2`. Conflating them
-    produces "counterexamples" to claims that are true — `u = (0,0,3,0)`, `e = 1` gives
-    `D_1·E = 5184 = H^{3/2}·√E` (equality, so the interpolated bound holds) while
-    `D_1·E = 5184 < 20736 = H²` (so the quadratic one fails). Both facts, no contradiction.
+17. **Square away half-integer exponents when you can.** `D_e ≥ H^{1+e/2}/E^{e/2}` ⟺
+    `H^{2+e} ≤ D_e²·E^e`, and with `e : ℤ` every exponent there is an integer — so an interpolation
+    can often be *stated* without `Real.rpow` at all. The `rpow`-free route in
+    `Cascade/DissipationThreshold.lean` (`weighted_cauchy_schwarz` + `weightedEnstrophy_sq_le` →
+    `dissipation_interp_sq`) is short. (`rpow` is still fine *inside* a proof — but see gotcha 18
+    for the elaboration trap that makes it look broken.) Related trap on any hand-verified
+    inequality: the **quadratic** domination `D_e ≥ H²/E` (homogeneity 2) and the **interpolated**
+    `D_e ≥ H^{1+e/2}/E^{e/2}` (homogeneity `1+e/2`) are *different statements* that coincide only at
+    `e = 2`. Conflating them produces "counterexamples" to claims that are true — at `u = (0,0,3,0)`,
+    `e = 1` one has `D_1·E = 5184 = H^{3/2}·√E` (equality: the interpolated bound holds) *and*
+    `D_1·E = 5184 < 20736 = H²` (the quadratic one fails). Both facts, no contradiction.
+18. **`Real.rpow` elaboration trap.** `(2 : ℝ)` and `((2 : ℕ) : ℝ)` are **not** interchangeable for
+    `rw` pattern matching against `Real.rpow_mul` / `Real.rpow_natCast`, and `(1:ℕ):ℝ / 3` parses as
+    `(1:ℕ) : (ℝ / 3)` — the ascription swallows the division. The symptoms are spurious "pattern not
+    found" and `HDiv Type ℕ Type` errors, which read as *mathematics* failures when the lemma is
+    fine. Always write `((n:ℕ):ℝ)` when the exponent arrived via `rpow_natCast`, and parenthesise
+    `(((1:ℕ):ℝ)/3)`. This cost one agent its entire budget on `inverted_holder`.
+19. **Keep the *truncated* geometric sum.** In the inverted-Hölder chain the factor must stay
+    `Σ_{k<N} 2^{−εk}`; replacing it by the infinite-sum bound `2^ε/(2^ε−1)` inside `S³ ≤ G·Q²`
+    makes the inequality **false**. The infinite bound is valid only for the separate step
+    `A²·G ≤ 1` (where it is an upper bound used in the right direction). Also,
+    `Σ_{k<N}2^{−2εk} ≠ (Σ_{k<N}2^{−εk})²`.
+20. **Useful Hölder at this pin.** `Real.inner_le_Lp_mul_Lq_of_nonneg` is a *real*-valued finite-sum
+    Hölder (with `Real.HolderConjugate 3 (3/2)` discharged by `norm_num`) — no `ℝ≥0` conversion is
+    needed, unlike the `ℝ≥0`-valued variants.
+21. **Process: one writer per file.** `lake build Cascade` compiles *every* file under `Cascade/`
+    via the `Cascade.+` glob, so an agent's unfinished file (or one containing `sorry`) turns the
+    aggregate build red even though nothing imports it. And two agents editing the *same* file
+    concurrently produce a merge that happens to compile only by luck — check `list_agents` for a
+    `running` entry before launching a second agent, and treat a "finished" notice as insufficient
+    proof that the previous turn is over.

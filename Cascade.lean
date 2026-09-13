@@ -18,5 +18,9 @@ import Cascade.Riccati
 import Cascade.EnstrophyBound
 import Cascade.BuoyancySign
 import Cascade.DissipationThreshold
+import Cascade.PositivityDegreeE
+import Cascade.BlowupRate
+import Cascade.BlowupEngine
+import Cascade.BlowupDegreeZero
 import Cascade.ScaleObstruction
 import Cascade.BernsteinTransfer
