@@ -2,6 +2,7 @@ import Cascade.ShellModel
 import Cascade.Boussinesq
 import Cascade.BoussinesqScaling
 import Cascade.BoussinesqEnergy
+import Cascade.DissipationDegree
 import Cascade.Lacunary
 import Cascade.Amplitude
 import Cascade.Phase
@@ -11,6 +12,7 @@ import Cascade.Layers
 import Cascade.Obstruction
 import Cascade.Gronwall
 import Cascade.NoBlowup
+import Cascade.ForcedModel
 import Cascade.Enstrophy
 import Cascade.Riccati
 import Cascade.EnstrophyBound

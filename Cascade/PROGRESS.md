@@ -2,12 +2,17 @@
 
 Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 
-> **Snapshot:** branch `dyadic-cascade`. Stages **S**, **R**, **A**, **G** (phase), **O**, and
-> **O′** are done; only **B** (forced blowup) remains. Stage **R** is `Cascade/Boussinesq.lean`
+> **Snapshot:** branch `dyadic-cascade`. **All planned stages are done: S, R, R′, A, G (phase),
+> O, O′, and B.** Stage **B** (forced blowup) came out **negative** — the forced model does not
+> blow up either, so the `B ∧ O` asymmetry does not materialise — which is itself the headline
+> finding; see the Stage B section below. Stage **R** is `Cascade/Boussinesq.lean`
 > (the frozen two-species dyadic Boussinesq model), plus `Cascade/BoussinesqScaling.lean`
 > (scaling covariance) and `Cascade/BoussinesqEnergy.lean` (the two-species energy balance).
-> Stage **A** is `Cascade/Lacunary.lean` (the lacunary ansatz and the *exact* amplitude-ODE
-> reduction) plus `Cascade/Amplitude.lean` (the Rayleigh–Taylor growth rate). Stage **G** is
+> Stage **R′** is `Cascade/DissipationDegree.lean`: the dissipation degree `d` is not a free
+> parameter — Boussinesq covariance *forces* `d = 2`, which places the model in the provably
+> regular regime. Stage **A** is `Cascade/Lacunary.lean` (the lacunary ansatz and the *exact*
+> amplitude-ODE reduction) plus `Cascade/Amplitude.lean` (the Rayleigh–Taylor growth rate).
+> Stage **G** is
 > `Cascade/Phase.lean` (the wavevector phase, the steering lemma, and the steerable cosine
 > coupling) plus `Cascade/PhaseGrowth.lean` (the consequence: the phase selects growth vs
 > oscillation and the growth rate is fully controllable) and `Cascade/PhaseControl.lean` (steering
@@ -20,7 +25,10 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > Stage **O′** is `Cascade/Enstrophy.lean` (the enstrophy budget), `Cascade/Riccati.lean` (the
 > Bernoulli barrier engine), `Cascade/EnstrophyBound.lean` (capstone: no finite-time blowup in
 > the **enstrophy/`H¹`** norm) and `Cascade/ScaleObstruction.lean` (the frequency-localized
-> version, tied to Palasek's `N^{d/2}`-vs-`N²` comparison). `lake build Cascade` and
+> version, tied to Palasek's `N^{d/2}`-vs-`N²` comparison). Stage **B** is
+> `Cascade/ForcedModel.lean` — the forced model frozen so `f ≡ 0` recovers the unforced one, with
+> both forced negatives (no finite-time energy blowup, no finite-time enstrophy blowup).
+> `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
 > no `sorry`.
@@ -42,6 +50,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/Boussinesq.lean` | stage R — frozen model + general version + pairing/flux lemmas |
 | `Cascade/BoussinesqScaling.lean` | stage R — scaling covariance (general + frozen) |
 | `Cascade/BoussinesqEnergy.lean` | stage R — two-species energy balance (general + frozen) |
+| `Cascade/DissipationDegree.lean` | stage R′ — general dissipation degree `d`; Boussinesq covariance forces `d = 2` |
 | `Cascade/Lacunary.lean` | stage A — lacunary ansatz + exact amplitude-ODE reduction |
 | `Cascade/Amplitude.lean` | stage A — Rayleigh–Taylor growth of the amplitude system |
 | `Cascade/Phase.lean` | stage G — wavevector phase, steering lemma, steerable cosine coupling |
@@ -55,6 +64,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/Riccati.lean` | stage O′ — Bernoulli/Riccati barrier engine |
 | `Cascade/EnstrophyBound.lean` | stage O′ — capstone: no finite-time `H¹` blowup |
 | `Cascade/ScaleObstruction.lean` | stage O′ — frequency-localized dissipation dominance (Palasek, shell form) |
+| `Cascade/ForcedModel.lean` | stage B — the forced model; forced energy and enstrophy bounds (both negative) |
 | `Cascade/BernsteinTransfer.lean` | the Bernstein `N^{d/2}` exponent is dominated by dissipation |
 | `Cascade/ConcentrationBarrier.lean` | Bernstein chain, part 1 (pointwise `≤ ‖𝓕 f‖₁`) |
 | `Cascade/Bernstein.lean` | Bernstein chain, part 2 (`‖f‖∞ ≤ √(vol ball) ‖f‖₂`) |
@@ -62,9 +72,9 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Criticality/BernsteinExport.lean` | re-exports the moved Pillar A under `Criticality.*` |
 
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
-`Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`, `Obstruction`,
-`Gronwall`, `NoBlowup`, `Enstrophy`, `Riccati`, `EnstrophyBound`, `ScaleObstruction`,
-`BernsteinTransfer` (and hence the Bernstein chain).
+`DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
+`Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
+`ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
 
 ---
 
@@ -218,6 +228,64 @@ For the inviscid model (`ν = μ = 0`) the family is covariant for every `b`; vi
 it except at `b = 1`. **`b = 1` is fixed here, before any statement about solutions**
 (fidelity rule 1). The `general_*` versions of all of the above hold for the four-parameter
 model.
+
+### Stage R′ — the dissipation degree is forced (`Cascade/DissipationDegree.lean`)
+
+The covariance above is not merely a *sufficient* condition on the viscosity term — it is
+*necessary*, and that is what pins the dissipation degree. Generalise the viscosity to
+`ν · 2^{d k} · u_k` for an arbitrary **degree** `d : ℤ` (so `d = 2` is the library's Laplacian
+`−Δ`, and Cheskidov's `α` is `d/2`):
+
+```lean
+def velocityRHSDegree (ν κ A B : ℝ) (d : ℤ) (u θ : ℤ → ℝ) (k : ℤ) : ℝ :=
+  boussinesqTransferU A B u k + κ * θ k - ν * dyadicWeight (d * k) * u k
+
+theorem velocityRHSDegree_two … :
+    velocityRHSDegree ν κ A B 2 u θ k = generalVelocityRHS ν κ A B u θ k   -- rfl
+
+theorem velocityRHSDegree_scaling_covariant (s b : ℤ) (ν κ A B : ℝ) (d : ℤ) … :
+    velocityRHSDegree (ν * dyadicWeight (s * (b + 1 - d))) κ A B d
+        (scaleVelocity s b u) (scaleTemperature s b θ) k
+      = dyadicWeight (s * (2 * b + 1)) * velocityRHSDegree ν κ A B d u θ (k - s)
+
+theorem velocityRHSDegree_scaling_covariant_two (s b : ℤ) … :   -- the law ν ↦ ν λ^{b-1}
+    velocityRHSDegree (ν * dyadicWeight (s * (b - 1))) κ A B 2
+        (scaleVelocity s b u) (scaleTemperature s b θ) k
+      = dyadicWeight (s * (2 * b + 1)) * velocityRHSDegree ν κ A B 2 u θ (k - s)
+
+theorem boussinesq_law_forces_degree_two (s b d : ℤ) (hs : s ≠ 0) (ν κ : ℝ) (hν : ν ≠ 0)
+    (h : ∀ (u θ : ℤ → ℝ) (k : ℤ),
+      velocityRHSDegree (ν * dyadicWeight (s * (b - 1))) κ 1 0 d
+          (scaleVelocity s b u) (scaleTemperature s b θ) k
+        = dyadicWeight (s * (2 * b + 1)) * velocityRHSDegree ν κ 1 0 d u θ (k - s)) :
+    d = 2
+
+theorem boussinesqB_forces_degree_two … : d = 2      -- the same at boussinesqB = 1
+```
+
+**What this says.** For general `d`, covariance with the viscosity law `ν ↦ ν λ^{b+1−d}` holds.
+The **Boussinesq** law is `ν ↦ ν λ^{b−1}` (that is the law the Laplacian gives: `∂_t` scales as
+`λ^{b+1}`, `Δ` as `λ^{b+2}`), and requiring covariance under *that* law forces `d = 2` — for
+**every** `b`, not just `b = 1`. Equivalently, at `b = 1` the equation is covariant with `ν`
+**unchanged** only at degree `2`. So the exponent is not a modelling free parameter: the symmetry
+that makes the model a faithful Boussinesq analogue is exactly what determines it.
+
+**The proof is a one-shell test.** Take the ladder supported only at shell `0`, zero temperature,
+and read the covariance identity at shell `k = s` (the image of shell `0` under the scaling). Every
+transfer term dies — the scaled ladder is supported at `s` and both neighbours vanish, and at shell
+`0` the unscaled ladder has vanishing neighbours — and both buoyancy terms are zero. The identity
+collapses to `2^{s(b−1)} · 2^{ds} · 2^{sb} = 2^{s(2b+1)}`, i.e. `s(d−2) = 0`, so `d = 2` whenever
+`s ≠ 0`. The only ingredient beyond arithmetic is injectivity of `k ↦ 2^k`
+(`dyadicWeight_injective`, from `zpow_right_injective₀`). A non-vacuity `example` records that the
+hypothesis *is* satisfied at `d = 2`, so "the law holds nowhere else" is not an empty statement.
+
+**Why it matters for the project.** Write `α = d/2` (Cheskidov's dissipation degree). Then
+`d = 2` is `α = 1`. Cheskidov's dyadic model is regular for `α ≥ 1/2` and blows up in finite time
+for `α < 1/3`, with an open gap in between; his model *includes* the force. So the model this
+library froze at Stage R is in the **provably regular** regime, and Stage B's forced blowup is not
+merely unproven there — it is impossible. The dyadic exponent whose estimates match 3D
+Navier–Stokes is `α = 2/5`, which lies *inside* the open gap. That tension is the honest end of
+this line of the project; see the Stage B discussion below.
 
 ### Two-species energy balance (Stage R deliverable)
 
@@ -706,20 +774,139 @@ AB (3.3) numerically: `Gprefix` at `e0 = ![1,0]`, `λ = w = 1`, `Θ = (3,5)`, `�
 
 ---
 
-## Not started
+## Done — Stage B, the forced model (negative result) (`Cascade/ForcedModel.lean`)
 
-- **Stage B** — forced blowup. Needs the *forced* model fixed first: force support, and whether
-  `ν, μ` stay. Recommendation: **viscous + force**, i.e. the same model as Stage O with the force
-  toggled, so that `B ∧ O` is the same model with the force off/on (Palasek's obstruction is a
-  viscous, `N²` statement). Precedents: Cheskidov, *Blow-up in finite time for the dyadic model of
-  the Navier–Stokes equations* (`arXiv:math/0601074`); Katz–Pavlović, *Finite time blow up for a
-  dyadic model of the Euler equations*. Caveat recorded in `VISION`-fidelity terms: a scalar shell
-  model has no `ζ₁` phase direction, so it cannot reproduce the AB *controlled* construction — any
-  dyadic blowup will be uncontrolled/self-similar. With Stage H the *shape* of the construction is
-  now available (`Gprefix`/`Dprefix`, triangularity); what Stage B still needs is the force and the
-  honest answer to whether the triangular layer model blows up as an ODE system.
-- **Capstone `B ∧ O`** — the forced/unforced asymmetry, the formal content of the Tao/Palasek
-  exchange *in the model*.
+Stage B asked for the dyadic analogue of the Alpöge–Buckmaster construction: a forced model that
+blows up in finite time, so that `B ∧ O` would exhibit a forced-vs-unforced asymmetry. **It came out
+negative, and that is the result.** The force does not open a blowup channel in this model.
+
+### The model is frozen so that `B` and `O` are the *same* model
+
+Following the Stage-O recommendation (viscous + force, force toggled), the force enters as one added
+term and nothing else changes:
+
+```lean
+def forcedVelocityRHS (ν κ : ℝ) (f u θ : ℤ → ℝ) (k : ℤ) : ℝ :=
+  dyadicVelocityRHS ν κ u θ k + f k
+def forcedTemperatureRHS (μ : ℝ) (h u θ : ℤ → ℝ) (k : ℤ) : ℝ :=
+  dyadicTemperatureRHS μ u θ k + h k
+def forcedBoussinesqRHS (ν μ κ : ℝ) (f h u θ : ℤ → ℝ) (k : ℤ) : ℝ × ℝ :=
+  (forcedVelocityRHS ν κ f u θ k, forcedTemperatureRHS μ h u θ k)
+
+theorem forcedVelocityRHS_zero … : forcedVelocityRHS ν κ (fun _ => 0) u θ k = dyadicVelocityRHS ν κ u θ k
+theorem forcedTemperatureRHS_zero … / forcedBoussinesqRHS_zero …
+theorem isForcedTruncatedSolution_zero_iff … :
+    IsForcedTruncatedSolution ν μ κ N 0 0 u θ ↔ IsUnforcedTruncatedSolution ν μ κ N u θ
+```
+
+`IsForcedTruncatedSolution` has **exactly** the shape of `IsUnforcedTruncatedSolution` — equations
+on all of `ℤ`, the same Dirichlet ends `u(-1) = u(N) = θ(-1) = θ(N) = 0`, time-dependent ladders
+`u θ : ℝ → ℤ → ℝ` — with only the RHS forced. The `_zero` lemmas are not `rfl` (see gotcha 15) but
+they unfold *only* the forced-RHS definition, so `B ∧ O` really is one system with the force
+toggled, not two systems that happen to look alike.
+
+### Negative 1 — the force cannot blow up the energy
+
+```lean
+theorem forced_energy_rate_le (ν μ κ) (hκ : 0 ≤ κ) (hν : 0 ≤ ν) (N) (f h) (u θ)
+    (hsol : IsForcedTruncatedSolution ν μ κ N f h u θ) (t) :
+    2 * (∑ k ∈ range N, u t k * forcedVelocityRHS ν κ f (u t) (θ t) k)
+      ≤ 2 * (κ * √(entropy (θ t) N) + √(forceEnergy f N)) * √(velocityEnergy (u t) N)
+        - 2 * ν * velocityEnergy (u t) N
+
+theorem forced_truncated_energy_bounded (hν : 0 < ν) (hκ : 0 ≤ κ) … (T) (hT : 0 ≤ T) :
+    ∃ C, ∀ t ∈ Set.Icc 0 T, velocityEnergy (u t) N ≤ C
+```
+
+With energy-conserving transfer the forced energy obeys the **logistic** inequality
+`E' ≤ 2(κ√S + √F)√E − 2νE`, which is globally bounded: a fixed force is *linear* in `√E` while
+dissipation is linear in `E`, so large `E` is always damped. The entropy appears at the current time
+`S(t)`, not `S(0)` — a temperature force destroys entropy monotonicity, so `S(0)` is not available;
+using `S(t)` is strictly stronger and needs no monotonicity at all. There is also
+`forced_energy_le_max_unforced_temperature`: for the standard case `h = 0` the entropy *is* antitone
+and one gets a **uniform-in-time** bound `E(t) ≤ max(E(0), (κ√S(0)+√F)/(2ν − κ√S(0) − √F))`,
+provided the dissipation gap `2ν > κ√S(0) + √F`; the extra `√F` in the gap is the price of the
+force.
+
+Load-bearing hypotheses, and two that turned out **not** to be needed: `0 < ν` and `0 ≤ κ` are
+load-bearing; finiteness of `f` is *not* needed (`forceEnergy f N` is a finite sum of squares for any
+`f`), and neither is continuity (it is derived from differentiability in the predicate, with the
+entropy ceiling obtained from compactness of `Icc 0 T`).
+
+### Negative 2 — the force cannot blow up the enstrophy either
+
+```lean
+theorem forced_enstrophy_rate_le (ν κ E_max) (hκ : 0 ≤ κ) (hν : 0 ≤ ν) (hEpos : 0 < E_max) (N f u θ)
+    (huBot : u (-1) = 0) (huTop : u (N:ℤ) = 0) (hEmax : velocityEnergy u N ≤ E_max) :
+    2 * ∑_{k<N} 4^k u_k (du_k/dt)_forced
+      ≤ 6 H √H + κ (H + T) + 2 √H √He − 2 ν H²/E_max
+
+theorem forced_enstrophy_young (hν : 0 < ν) (hEpos : 0 < E_max) (hκ : 0 ≤ κ) (hHe : 0 ≤ He)
+    (hTmax : 0 ≤ T_max) (hs : 0 ≤ s) :
+    6s³ + κs² + 2√He·s + κT_max ≤ (ν/E_max)s⁴ + (2187/(16(ν/(2E_max))³) + κ²/(4(ν/(4E_max))) + E_max/ν + He + κT_max)
+
+theorem forced_truncated_enstrophy_bounded (hν : 0 < ν) (hκ : 0 ≤ κ) … (T) (hT : 0 ≤ T) (hcont) :
+    ∃ C, ∀ t ∈ Set.Icc 0 T, enstrophy (u t) N ≤ C
+```
+
+This is the forced analogue of `truncated_unforced_enstrophy_bounded`, and it is the closest the
+project came to a blowup. The mechanism is a **homogeneity mismatch**: the destabilising terms are
+cubic transfer (`6H^{3/2}`) and the force work, which Cauchy–Schwarz makes *sublinear*
+(`2√H√He`) — homogeneity `1/2` — while viscous dissipation is quadratic (`2νH²/E_max`). Young's
+inequality absorbs the cubic and the force terms into the dissipation above the explicit threshold
+`√(C₀/(ν/E_max))`, and the Bernoulli barrier `le_of_deriv_le_const_sub_sq` forbids crossing it. So
+the force merely *shifts* the barrier; it does not create a channel. The force's own Cauchy–Schwarz
+step is `force_enstrophy_work_le`: `∑_{k<N} 4^k u_k f_k ≤ √H √He`, the exact analogue of
+`buoyancy_enstrophy_le`.
+
+### Verdict
+
+**The forced-vs-unforced asymmetry does not materialise in this model.** Force off: no blowup
+(Stage O energy, Stage O′ enstrophy). Force on: still no blowup (Stage B energy and enstrophy). So
+the capstone `B ∧ O` is itself a **negative** result — the model is too dissipative to exhibit the
+asymmetry that the Tao/Palasek exchange is about. Combined with Stage R′ this is consistent rather
+than surprising: the scaling-covariant Boussinesq model has dissipation degree `d = 2` (`α = 1`),
+which is inside the provably regular regime of the scalar dyadic model, and Cheskidov's model
+already includes the force.
+
+The same conclusion holds for the **untruncated** model: at `α = 1` the scalar dyadic model is
+globally regular (Cheskidov), and Stage O/O′ are our own proofs in the Boussinesq setting. So at
+`d = 2` there is no forced blowup, truncated or not. A dyadic blowup requires a **different model
+with weaker dissipation** — Cheskidov's threshold is `α < 1/3`, and his blowup is *data-driven*
+(large `H^γ` norm) rather than force-driven, on the infinite lattice. Stage R′ is precisely the
+statement that the scaling-covariant Boussinesq model cannot be that model.
+
+Honest limitations of the bounds above:
+
+- The enstrophy constant `C` depends on the solution (through the energy ceiling `E_max` and the
+  temperature-enstrophy ceiling `T_max`), not on the data alone. A uniform-in-time enstrophy bound
+  would need `h = 0` (so `T` is non-increasing, via `temperature_pairing_eq_neg_mu_tempEnstrophy`)
+  *and* a uniform energy ceiling, i.e. the gap condition above.
+- `hcont` is carried as an explicit hypothesis to match the unforced capstone's convention; it is in
+  fact automatic here.
+- The buoyancy source `κ(H + T)` is what defeats the unforced Lyapunov cancellation
+  `Ψ = H + (κ/2μ)S` once `h ≠ 0`.
+- As always: a model. Nothing here is a statement about the Boussinesq PDE.
+
+---
+
+## Open — where a dyadic blowup could still live
+
+- **Stage H's layer model as an ODE system.** `Cascade/Layers.lean` is the *realisation* (the model
+  plus its one-way/triangular structure), not a blowup statement. Whether the triangular layer
+  system blows up as an ODE system is untouched by Stage B, which is about the Stage-R model.
+  Blockers on record: what is actually free at each layer (the initial wavevector `ζ_q(0)`, not the
+  common rotation `α'`), and whether a uniform-in-`q` lower bound on the growth rate `√(ab)` can be
+  proved — without it the infinite-octave growth does not follow.
+- **A weaker-dissipation dyadic model** (Cheskidov's `α < 1/3`). Guaranteed-true positive half, but
+  it is a different model: one species, fractional dissipation, and it needs the **infinite lattice**
+  statement shape (`tsum`, "not locally integrable"), which nothing in this library currently has.
+  Its proof ingredients — an inverted Hölder lemma, a corrected Lyapunov functional, and a Riccati
+  `Ḣ ≳ H^{3/2}` — are close to machinery already here (`Riccati.lean`, the cubic production in
+  `Enstrophy.lean`, `transfer_le_dissipation` read backwards), so the estimate side is cheap; the
+  statement-shape side is the real cost.
+- **Stage B for the AB construction proper.** Unchanged and untouched: AB build the force together
+  with the solution, and their blowup is for the PDE, not a shell model.
 
 ---
 
@@ -805,3 +992,12 @@ the bottom of each file.
 14. **`Matrix (Fin 2) (Fin 2) ℝ` has no topological/norm instance** in this pin (deliberately:
     matrix multiplication is not sup-norm submultiplicative), so `HasDerivAt` is ill-typed at
     matrix type. Take derivatives componentwise (`Cascade.Phase.phase_steering_component`).
+15. **`x + 0 = x` on `ℝ` is *not* a definitional equality** — it is Mathlib's `add_zero`, proved
+    through the quotient construction. So a "force off recovers the model" lemma whose definition
+    is `… + f k` closes by `simp [forcedVelocityRHS]`, and bare `rfl` **fails** with "Not a
+    definitional equality". The recovery is still definitional in the sense that matters (only the
+    forced-RHS definition unfolds: no `funext`, no rewriting of the frozen couplings), but don't
+    claim `rfl` and don't bend the definition to manufacture it.
+16. **`zpow_right_injective₀` exists at this pin** (`0 < a`, `a ≠ 1`): it gives
+    `a^m = a^n → m = n` for `m n : ℤ`, hence `Function.Injective dyadicWeight` in one line. No
+    detour through `Real.log` is needed.
