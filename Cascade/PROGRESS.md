@@ -12,7 +12,9 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > coupling) plus `Cascade/PhaseGrowth.lean` (the consequence: the phase selects growth vs
 > oscillation and the growth rate is fully controllable) and `Cascade/PhaseControl.lean` (steering
 > *both* coefficients — the exact product formula, its range, and the stably stratified case where
-> the phase buys nothing). Stage **O** is
+> the phase buys nothing), plus `Cascade/Layers.lean` (stage G‴/H — the one-wavevector-per-octave
+> realisation: AB eq. (3.3)'s accumulated background `G_{<q}`, `D_{<q}` and the *triangularity* of
+> the layer model, i.e. no feedback from higher octaves). Stage **O** is
 > `Cascade/Obstruction.lean` (the pointwise obstruction), `Cascade/Gronwall.lean` (the abstract
 > Grönwall engine) and `Cascade/NoBlowup.lean` (capstone: no finite-time **energy** blowup).
 > Stage **O′** is `Cascade/Enstrophy.lean` (the enstrophy budget), `Cascade/Riccati.lean` (the
@@ -45,6 +47,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/Phase.lean` | stage G — wavevector phase, steering lemma, steerable cosine coupling |
 | `Cascade/PhaseGrowth.lean` | stage G′ — the phase selects growth vs oscillation; the rate is fully controllable |
 | `Cascade/PhaseControl.lean` | stage G″ — steering both coefficients: exact product formula, range, and the stable case |
+| `Cascade/Layers.lean` | stage H — AB eq. (3.3): one wavevector per octave, accumulated `G_{<q}`/`D_{<q}`, triangularity |
 | `Cascade/Obstruction.lean` | stage O — pointwise obstruction inequalities |
 | `Cascade/Gronwall.lean` | stage O — abstract Grönwall no-blowup engine |
 | `Cascade/NoBlowup.lean` | stage O — capstone: no finite-time energy blowup |
@@ -59,7 +62,9 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Criticality/BernsteinExport.lean` | re-exports the moved Pillar A under `Criticality.*` |
 
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
-`Lacunary`, `Amplitude`, `BernsteinTransfer` (and hence the Bernstein chain).
+`Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`, `Obstruction`,
+`Gronwall`, `NoBlowup`, `Enstrophy`, `Riccati`, `EnstrophyBound`, `ScaleObstruction`,
+`BernsteinTransfer` (and hence the Bernstein chain).
 
 ---
 
@@ -653,6 +658,54 @@ enstrophy budget (a magnitude comparison in which phases do not appear).
 
 ---
 
+### Stage H — the one-wavevector-per-octave realisation (`Cascade/Layers.lean`)
+
+Stages G/G′/G″ treated a **single** wavevector whose steering angle `α` is a *free* control. AB
+eq. (3.3) is a different model: **one wavevector per octave**, the `q`-th octave driven **one-way**
+by the accumulated background of the octaves below it. `Layers.lean` realises it. With
+`e_j = ζ_j/|ζ_j|` (Euclidean, `unitVec`), `A_j = −λ_j|ζ_j|Θ_j` (`layerGradScalar`) and
+`G_{<q} = −e₀ − Σ_{j<q} w_j A_j e_j` (`Gprefix`),
+`D_{<q} = α' J + Σ_{j<q} w_j Ω_j (J e_j) ⊗ e_j` (`Dprefix`), the octave ODEs are
+
+```lean
+def layerZetaRHS  (α' w Ω ζ q)        := fun i => -(((Dprefix α' w Ω ζ q)ᵀ) *ᵥ ζ q) i
+def layerThetaRHS (e0 lam w Θ Ω ζ q)  := abTempCoeff (lam q) (ζ q) (Gprefix e0 lam w Θ ζ q) * Ω q
+def layerOmegaRHS (lam Θ ζ q)         := abVortCoeff (lam q) (ζ q) * Θ q
+```
+
+with the structural content:
+
+```lean
+theorem Gprefix_zero / Dprefix_zero                      -- G_{<0} = −e₀, D_{<0} = α' • J
+theorem Gprefix_succ (q) / Dprefix_succ (q)              -- append one octave: the greedy step
+theorem Gprefix_congr / Dprefix_congr                    -- lower octaves only
+theorem layerRHS_congr_of_agree_le                       -- TRIANGULARITY (headline)
+theorem layerOmegaRHS_eq                                 -- b_q = λ_q (ζ_q)₀ * Θ_q
+```
+
+**Two findings.**
+
+1. **The phase is no longer a free control.** `ζ_q` is forced by `D_{<q}`, which is assembled from
+   the *lower* octaves' `Ω_j`, `ζ_j`; `G_{<q}` likewise from the lower octaves' `Θ_j`, `ζ_j`. Only
+   the common rotation rate `α'` remains a free background parameter — the individual phases are
+   determined by the cascade beneath them. `Gprefix_succ`/`Dprefix_succ` make the generation-by-
+   generation appending precise.
+2. **Triangularity** (`layerRHS_congr_of_agree_le`): the right-hand sides at octave `q` are
+   unchanged if only octaves `j > q` are altered. `G_{<q}`/`D_{<q}` mention only `j < q`, and
+   octave `q`'s own RHS mentions `ζ_q`, `Θ_q`, `Ω_q` and nothing higher. This is Tao's "barely any
+   feedback from high frequency waves back into the low frequency components" made structural, and
+   it is what makes the greedy (low-to-high) construction of AB possible.
+
+**Scope.** This is the *realisation* — model plus one-way structure — **not** the blowup: no claim
+here that the coupled system develops a singularity. As in `Phase.lean`/`PhaseControl.lean`, `|ζ|`
+is the explicit Euclidean `l2norm` (never the ambient `‖·‖`, which is the sup norm on `Fin 2 → ℝ`),
+and the layer ODEs are recorded as right-hand sides rather than `HasDerivAt` statements because
+`Matrix (Fin 2) (Fin 2) ℝ` carries no norm instance at this pin. Non-vacuity is checked against
+AB (3.3) numerically: `Gprefix` at `e0 = ![1,0]`, `λ = w = 1`, `Θ = (3,5)`, `ζ_j = ![1,0]` and
+`q = 2` is `![7,0]`; `Dprefix` with `α' = 1`, `Ω = (2,4)` is `!![0,−1;7,0]`.
+
+---
+
 ## Not started
 
 - **Stage B** — forced blowup. Needs the *forced* model fixed first: force support, and whether
@@ -662,7 +715,9 @@ enstrophy budget (a magnitude comparison in which phases do not appear).
   the Navier–Stokes equations* (`arXiv:math/0601074`); Katz–Pavlović, *Finite time blow up for a
   dyadic model of the Euler equations*. Caveat recorded in `VISION`-fidelity terms: a scalar shell
   model has no `ζ₁` phase direction, so it cannot reproduce the AB *controlled* construction — any
-  dyadic blowup will be uncontrolled/self-similar.
+  dyadic blowup will be uncontrolled/self-similar. With Stage H the *shape* of the construction is
+  now available (`Gprefix`/`Dprefix`, triangularity); what Stage B still needs is the force and the
+  honest answer to whether the triangular layer model blows up as an ODE system.
 - **Capstone `B ∧ O`** — the forced/unforced asymmetry, the formal content of the Tao/Palasek
   exchange *in the model*.
 
