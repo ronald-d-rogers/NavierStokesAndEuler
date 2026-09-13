@@ -597,6 +597,17 @@ problem: Stage B's force must *hold* the coupling favourable, not merely excite 
 realisation (one wavevector per octave, `G`/`D` accumulated from the lower octaves as in AB
 eq. (3.3)), is the next step and is not claimed.
 
+**This does not touch the Stage-O/O′ enstrophy bound.** That bound is a comparison in
+*magnitudes* — transfer `≤ 3H√H` against dissipation acting at rate `N_K²` — and phases never
+enter it (the tail transfer is `Σ a_{k-1}²a_k`). Nothing in the repo bridges the 2×2 amplitude
+pair to enstrophy production, so `PhaseGrowth` cannot loosen the obstruction. What the phase
+removes is a **linear** brake: with the frozen coupling `b = 2ⁿκ`, a wrong-signed constant kept
+the Rayleigh–Taylor mode from igniting at all. It does **not** raise the coupling ceiling
+either — `a·λ·c` is the coupling the scalar model already had at the aligned wavevector; the
+phase lets the system *reach* it. The one open route by which the phase could touch the
+absorption threshold — whether steering `a` as well can move the `3H√H` coefficient itself — is
+unexplored.
+
 ---
 
 ## Not started
