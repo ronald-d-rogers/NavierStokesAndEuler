@@ -9,6 +9,7 @@ import Cascade.Phase
 import Cascade.PhaseGrowth
 import Cascade.PhaseControl
 import Cascade.Layers
+import Cascade.LayerTrap
 import Cascade.Obstruction
 import Cascade.Gronwall
 import Cascade.NoBlowup

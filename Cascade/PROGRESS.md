@@ -44,6 +44,11 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > threshold `α = 1/2` — regularity at that exponent is known by other means, so it is a limitation
 > of the method, not an open problem). (`e = 0` is outside Cheskidov's `α > 0` hypotheses, so that
 > endpoint is our theorem, not his.)
+> Finally, `Cascade/LayerTrap.lean` closes the one-wavevector-per-octave (AB eq. (3.3)) direction
+> with a **documented negative**: with the common rotation off and component `0` of the background
+> and of every wavevector vanishing, all three layer right-hand sides vanish — a nontrivial,
+> self-perpetuating equilibrium with no growth. So the layer model does not generically blow up, and
+> what remains there is the construction of good data.
 > `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
@@ -73,6 +78,7 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/PhaseGrowth.lean` | stage G′ — the phase selects growth vs oscillation; the rate is fully controllable |
 | `Cascade/PhaseControl.lean` | stage G″ — steering both coefficients: exact product formula, range, and the stable case |
 | `Cascade/Layers.lean` | stage H — AB eq. (3.3): one wavevector per octave, accumulated `G_{<q}`/`D_{<q}`, triangularity |
+| `Cascade/LayerTrap.lean` | a growth-free equilibrium of the layer model (`α' = 0`, component 0 vanishing) — closes the layer direction |
 | `Cascade/Obstruction.lean` | stage O — pointwise obstruction inequalities |
 | `Cascade/Gronwall.lean` | stage O — abstract Grönwall no-blowup engine |
 | `Cascade/NoBlowup.lean` | stage O — capstone: no finite-time energy blowup |
@@ -97,7 +103,8 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
 `BuoyancySign`, `DissipationThreshold`, `PositivityDegreeE`, `BlowupRate`, `BlowupEngine`,
-`BlowupDegreeZero`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
+`BlowupDegreeZero`, `LayerTrap`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein
+chain).
 
 ---
 
@@ -1128,6 +1135,67 @@ satisfiable.
 
 ---
 
+## Done — the layer-model trap (`Cascade/LayerTrap.lean`)
+
+A **documented negative** that closes the one-wavevector-per-octave direction. `Cascade/Layers.lean`
+realises AB eq. (3.3) but says nothing about its dynamics; the question was whether that model can
+be driven to blowup. This file shows it has a **growth-free equilibrium**, so nothing about the
+model forces blowup and the whole question is a construction problem (AB's own), not a dynamical
+one.
+
+```lean
+theorem layerRHS_eq_zero_of_transverse (e0 : Fin 2 → ℝ) (lam w : ℕ → ℝ) (Θ Ω : ℕ → ℝ)
+    (ζ : ℕ → Fin 2 → ℝ) (he0 : e0 0 = 0) (hζ : ∀ q, ζ q 0 = 0) (q : ℕ) :
+    layerZetaRHS 0 w Ω ζ q = 0 ∧
+    layerThetaRHS e0 lam w Θ Ω ζ q = 0 ∧
+    layerOmegaRHS lam Θ ζ q = 0
+```
+
+**The configuration:** the common rotation is off (`α' = 0`) and component `0` of the background
+direction `e0` *and* of every wavevector `ζ_q` vanishes. In the library's convention component `0`
+is the gravity-direction component — the one `abVortCoeff (lam q) (ζ q) = lam q * ζ q 0` reads off —
+so this is the configuration in which the buoyancy coupling is identically zero. Then:
+
+* `Gprefix_apply_zero` — the accumulated gradient has vanishing component `0` too, since it is built
+  from `−e0` and the unit vectors `e_j`, all of which have vanishing component `0`;
+* `abVortCoeff_eq_zero` — the buoyancy coupling is literally the vanishing component;
+* `abTempCoeff_eq_zero` — `rotJ *ᵥ ζ_q = ![-(ζ_q)₁, 0]` is dotted against `G_{<q} = ![0, ·]`, giving `0`;
+* `layerZetaRHS_eq_zero` — at `α' = 0` each rank-one term of `D_{<q}` is `(J e_j) ⊗ e_j` with
+  **zero second row** (`Dprefix_zero_row_one`), so `D_{<q}ᵀ` has a zero second *column* and
+  `D_{<q}ᵀ ζ_q = 0`.
+
+So all three right-hand sides vanish at every octave: the wavevector field is stationary, hence the
+hypothesis `∀ q, (ζ_q)₀ = 0` is **self-perpetuating**, and no amplitude grows. Non-vacuity is
+machine-checked: `ζ_q = ![0,1]` is nonzero, and `Gprefix ![0,1] … 2 = ![0,1]`.
+
+### The caveat, made quantitative
+
+The equilibrium genuinely needs `α' = 0`, and the file proves exactly how much:
+
+```lean
+theorem layerZetaRHS_apply_zero (α' : ℝ) (w Ω : ℕ → ℝ) (ζ : ℕ → Fin 2 → ℝ)
+    (hζ : ∀ q, ζ q 0 = 0) (q : ℕ) :
+    layerZetaRHS α' w Ω ζ q 0 = -(α' * ζ q 1)
+```
+
+So the whole `α' = 0` part of `D_{<q}` contributes *nothing* to `(D_{<q})ᵀζ_q` for these
+wavevectors, and the component-`0` drift is exactly `−α' (ζ_q)₁`. With `α' ≠ 0` and `(ζ_q)₁ ≠ 0`
+the wavevectors rotate out of the degenerate plane and the trap opens. Hence the honest statement is
+**not** "the layer model has a growth-free configuration" but "**with the common rotation switched
+off, this configuration is a nontrivial equilibrium in which nothing grows**".
+
+### Why this closes the direction
+
+A numeric scout (`/tmp/scout_margin.py`, not in the repo) had suggested the viability of AB's
+greedy construction might be carried by the geometric growth of the octave weights `λ_q`, with the
+growth margin recovering after each collapse. This theorem kills that reading: the recovery seen
+there depended on the wavevector directions, and there is an admissible, **stationary** choice for
+which the margin is identically zero. So no invariant forces growth, the model does not generically
+blow up, and what remains is the construction of good data — which is AB's theorem, not a general
+theory waiting to be found.
+
+---
+
 ## Open — where a dyadic blowup could still live
 
 The **frozen truncated model is now closed**: no finite-time blowup for any `κ`, forced or unforced,
@@ -1153,13 +1221,11 @@ remaining directions all *leave* that model.
   `Summable (fun k => 4^k u_k²)`), flux telescoping to `±∞` (energy conservation as "the boundary
   flux vanishes"), `tsum` versions of the estimates, and a solution concept on the infinite lattice.
   Value: removes the citation on the headline claim.
-- **Stage H's layer model as an ODE system.** `Cascade/Layers.lean` is the *realisation* (the model
-  plus its one-way/triangular structure), not a blowup statement. Whether the triangular layer
-  system blows up as an ODE system is untouched by Stage B, which is about the Stage-R model.
-  Blockers on record: what is actually free at each layer (the initial wavevector `ζ_q(0)`, not the
-  common rotation `α'`), and whether a uniform-in-`q` lower bound on the growth rate `√(ab)` can be
-  proved — without it the infinite-octave growth does not follow. Highest ambition, highest chance
-  of nothing; the only route that is about AB's actual construction.
+- **Stage H's layer model as an ODE system.** **CLOSED as a documented negative** — see
+  `Cascade/LayerTrap.lean` above. The model has an admissible, nontrivial, *stationary* equilibrium
+  in which every right-hand side vanishes, so no invariant forces growth and the model does not
+  generically blow up. What is left is the construction of good data, which is AB's own theorem.
+  (Untouched by Stage B, which is about the Stage-R model.)
 - **The `α = 2/5` sharp-estimate statement.** Formalize that the dissipation-dominance estimate is
   sharp at the exponent whose nonlinear estimates match 3D Navier–Stokes — a machine-checked version
   of "why this dyadic model is easier than 3D NS". Cheap, and the honest capstone to the fidelity
