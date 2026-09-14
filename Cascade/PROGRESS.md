@@ -36,14 +36,18 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > for `e ≥ 2`, ties exactly at `e = 1` (which is Cheskidov's own regularity threshold `α = 1/2`),
 > and the quadratic dissipation domination provably fails for every `e < 2`. The model's own
 > `e = 2` is the **bottom** of the barrier's unconditional range.
-> **And the positive half is now proved too**: `Cascade/BlowupDegreeZero.lean` establishes
-> **finite-time blowup at dissipation degree `e = 0`** — no globally-defined solution of the
-> truncated chain exists above the explicit threshold `(2ν/c)²` with `c = 27√35/400`. So the model
-> family exhibits a genuine `B ∧ O` after all: **regular at `e ≥ 2`, singular at `e = 0`**, with
-> `e = 1` marginal for our barrier (the two homogeneities tie there, at Cheskidov's regularity
-> threshold `α = 1/2` — regularity at that exponent is known by other means, so it is a limitation
-> of the method, not an open problem). (`e = 0` is outside Cheskidov's `α > 0` hypotheses, so that
-> endpoint is our theorem, not his.)
+> **A claimed positive half at `e = 0` has been withdrawn.** The former
+> `Cascade/BlowupDegreeZero.lean` (with its auxiliaries `Cascade/BlowupRate.lean` and
+> `Cascade/PositivityDegreeE.lean`) asserted **finite-time blowup at dissipation degree `e = 0`**
+> — no globally-defined solution above the threshold `(2ν/c)²`, `c = 27√35/400`. That theorem is
+> **false**. The truncated solution predicate on which every one of those files rested imposed the
+> shell equation on *all* of `ℤ`, which is inconsistent with the Dirichlet value `u t N = 0`: the
+> equation at `k = N` forces `u t (N-1) = 0` for all `t`, and the same step cascades downward, so
+> the retained range vanishes identically and every theorem assuming the predicate was **vacuous**.
+> With the repaired predicate (equations on `0 ≤ k < N` only) the truncated chain has **no**
+> finite-time blowup, for any degree `e ≥ 0` and any `κ` — see
+> `Cascade/TruncatedRegularity.lean` and the correctness episode below. The three files have been
+> deleted; `Cascade/BlowupEngine.lean` is abstract, correct, and currently unused.
 > Finally, `Cascade/LayerTrap.lean` closes the one-wavevector-per-octave (AB eq. (3.3)) direction
 > with a **documented negative**: with the common rotation off and component `0` of the background
 > and of every wavevector vanishing, all three layer right-hand sides vanish — a nontrivial,
@@ -89,10 +93,11 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/ForcedModel.lean` | stage B — the forced model; forced energy and enstrophy bounds (both negative) |
 | `Cascade/BuoyancySign.lean` | stage B′ — `\|κ\|` replaces `κ`: no-blowup for **every** sign of `κ` (11 statements re-proved) |
 | `Cascade/DissipationThreshold.lean` | the dissipation threshold: no blowup for degree `e ≥ 2`; the barrier ties at `e = 1`; quadratic domination provably fails below `e = 2` |
-| `Cascade/PositivityDegreeE.lean` | comparison principle: nonnegative data stay nonnegative (all `e`, forced or not) |
-| `Cascade/BlowupRate.lean` | the Lyapunov growth rate `H' ≥ (27/28)·cubicSum − 2ν·H` at `c₂ = 4/7` |
-| `Cascade/BlowupEngine.lean` | the reversed-Bernoulli engine + the inverted Hölder lemma |
-| `Cascade/BlowupDegreeZero.lean` | **capstone: finite-time blowup at `e = 0`** — no global solution for large nonnegative data |
+| `Cascade/TruncatedRegularity.lean` | **honest replacement**: the truncated model is trivially globally regular (transfer cancellation, exact energy identity, finite-range norm domination by the energy) |
+| `Cascade/BlowupEngine.lean` | the reversed-Bernoulli engine + the inverted Hölder lemma (abstract, correct, **currently unused**) |
+| `Cascade/PositivityDegreeE.lean` | **deleted** — fed the withdrawn `e = 0` blowup capstone |
+| `Cascade/BlowupRate.lean` | **deleted** — fed the withdrawn `e = 0` blowup capstone |
+| `Cascade/BlowupDegreeZero.lean` | **deleted** — false on the repaired predicate |
 | `Cascade/BernsteinTransfer.lean` | the Bernstein `N^{d/2}` exponent is dominated by dissipation |
 | `Cascade/ConcentrationBarrier.lean` | Bernstein chain, part 1 (pointwise `≤ ‖𝓕 f‖₁`) |
 | `Cascade/Bernstein.lean` | Bernstein chain, part 2 (`‖f‖∞ ≤ √(vol ball) ‖f‖₂`) |
@@ -102,9 +107,63 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
-`BuoyancySign`, `DissipationThreshold`, `PositivityDegreeE`, `BlowupRate`, `BlowupEngine`,
-`BlowupDegreeZero`, `LayerTrap`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein
-chain).
+`BuoyancySign`, `DissipationThreshold`, `BlowupEngine`, `TruncatedRegularity`, `LayerTrap`,
+`ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain). (`PositivityDegreeE`,
+`BlowupRate` and `BlowupDegreeZero` have been deleted — see the correctness episode below.)
+
+---
+
+## Correctness episode — the vacuous truncated predicate, and the honest replacement
+
+**The bug.** The truncated dyadic solution predicates — `IsUnforcedTruncatedSolution`,
+`IsForcedTruncatedSolution`, `IsUnforcedTruncatedSolutionE`, `IsForcedTruncatedSolutionE` — imposed
+the shell equation for **every** `k : ℤ` *and* imposed `u t N = 0` for every `t`. Those two are
+inconsistent: `u · N` is the zero function, so its derivative is `0`, so the equation at `k = N`
+forces `velocityRHS … N = 2^N (u t (N-1))² = 0`, hence `u t (N-1) = 0` for all `t`; the same step
+cascades downward and the retained range vanishes identically. Machine-checked: for `κ = 0`,
+`IsUnforcedTruncatedSolutionE ν μ 0 e N u θ` implies `∀ j ≤ N, ∀ t, u t ((N:ℤ) - j) = 0`.
+Consequently **every theorem assuming one of those predicates was vacuous** — including the whole
+no-blowup chain and, fatally, the `e = 0` blowup capstone.
+
+**The fix.** The equations are now restricted to the retained shells `0 ≤ k < N`. The predicates are
+consistent (inhabited by the zero equilibrium, and by genuinely nonzero local data), and the
+boundary conditions still close the truncation.
+
+**The honest consequence.** With the repaired predicate the truncated model is **trivially globally
+regular**, and there is no blowup theorem to be had:
+
+* The transfer pairing cancels exactly on the retained range (the Dirichlet ends make the
+  telescoping boundary terms vanish), so
+  `E' = 2κ ∑_{k<N} u_k θ_k − 2ν ∑_{k<N} 2^{ek} u_k²`, `E = ∑_{k<N} u_k²`. For `κ = 0`, `e = 0`
+  this is `E' = −2νE`, i.e. exponential decay.
+* On a **finite** range every weighted norm is dominated by the energy:
+  `∑_{k<N} 2^{sk} u_k² ≤ 2^{s(N-1)} · E` for `s ≥ 0`.
+* So nothing can blow up: no weighted norm can grow faster than `E`, which is non-increasing
+  (`κ = 0`) or Grönwall-bounded (general `κ`).
+
+This is stated and proved in `Cascade/TruncatedRegularity.lean`
+(`transfer_pairing_eq_zero`, `weighted_sq_le_energy`, `truncated_energy_hasDerivAt`,
+`truncated_globally_regular`).
+
+**The deletions.** `Cascade/BlowupDegreeZero.lean` (the blowup capstone; **false** on repair),
+`Cascade/BlowupRate.lean` and `Cascade/PositivityDegreeE.lean` (built solely to feed it) have been
+`git rm`-ed and their imports removed from `Cascade.lean`. `Cascade/BlowupEngine.lean` (the
+reversed-Bernoulli engine, the inverted Hölder lemma and some elementary inequalities) is abstract,
+correct and independent of any solution predicate; it is retained but **currently unused**, and its
+docstring now says so.
+
+**Where blowup actually lives.** Blowup in these models needs the **untruncated** lattice: there
+the weights `4^k` are unbounded, so the energy can decay while the enstrophy diverges, and the
+nonlinear transfer is no longer a finite sum with vanishing boundary terms. "Truncation is the
+dangerous direction" was exactly backwards — truncation **caps** the weights and is the safe
+direction.
+
+**Doc corrections.** The line in the "Open" section below that called truncation "the *dangerous*
+direction (it removes the enstrophy sink, which is why the Stage-O′ bound is only linear in `T`)"
+has been corrected: truncation is safe, and the linear-in-`T` form is an artifact of a Grönwall
+route that never used the finite-range norm cap. `Cascade/NoBlowup.lean`'s scope paragraph had
+claimed a Stage-B finite-time blowup for the forced model; that claim is withdrawn.
+`Cascade/EnstrophyBound.lean`'s module docstring now records the artifact explicitly.
 
 ---
 
@@ -1063,10 +1122,18 @@ squaring, which turns every exponent into an integer.
 
 ---
 
-## Done — finite-time blowup at degree `e = 0` (`Cascade/BlowupDegreeZero.lean`)
+## WITHDRAWN — the claimed finite-time blowup at degree `e = 0` (files deleted)
 
-**The project's first genuine blowup theorem, and the `B` half of `B ∧ O`.** The model is the
-scalar truncated dyadic chain at dissipation degree `e = 0` (uniform damping `ν·u_k`):
+> **Status: WITHDRAWN / FALSE.** The files `Cascade/BlowupDegreeZero.lean`,
+> `Cascade/BlowupRate.lean` and `Cascade/PositivityDegreeE.lean` have been deleted. Every
+> statement below rested on the old all-of-`ℤ` truncated predicate, which is inconsistent with the
+> Dirichlet condition `u_N = 0` and therefore vacuous (see the correctness episode above). What is
+> actually true is recorded in `Cascade/TruncatedRegularity.lean`: the truncated chain has **no**
+> finite-time blowup, at any degree `e ≥ 0` and any `κ`. The material below is kept only as a
+> record of the withdrawn argument.
+
+**The (withdrawn) claimed first genuine blowup theorem, and the `B` half of `B ∧ O`.** The model is
+the scalar truncated dyadic chain at dissipation degree `e = 0` (uniform damping `ν·u_k`):
 
 ```
 u_k' = 2^k (u_{k-1}² − 2 u_k u_{k+1}) − ν u_k,   0 ≤ k < N,   u_{-1} = u_N = 0,   ν ≥ 0
@@ -1118,20 +1185,16 @@ is outside his hypotheses. We follow his argument and formalize the endpoint he 
    `u_N = 0`) is re-proved in `BlowupDegreeZero.lean` as `correction_le_three_quarters`, and it is
    what makes the stated `c` correct. Using `7/11` instead would give a different (smaller) `c`.
 
-### The integer phase diagram, now complete
+### The integer phase diagram (corrected)
 
 | dissipation degree `e` | `α = e/2` | status |
 |---|---|---|
 | `e ≥ 2` | `α ≥ 1` | **no blowup** — enstrophy barrier closes; model's own exponent (`Cascade/DissipationThreshold.lean`) |
 | `e = 1` | `α = 1/2` | **marginal for our method** — the two homogeneities tie exactly. This is Cheskidov's regularity threshold and regularity at `α ≥ 1/2` is known by other means, so this row is a limitation of the enstrophy barrier, **not** an open problem |
-| `e = 0` | `α = 0` | **blowup for large data** — the theorem above |
+| `0 ≤ e` (incl. `e = 0`) | `α ≥ 0` | **no blowup** — the repaired truncated model is trivially globally regular (`Cascade/TruncatedRegularity.lean`). The old `e = 0` blowup row was an artifact of the vacuous predicate |
 
-So the model family exhibits a genuine `B ∧ O` contrast: the same couplings, with the dissipation
-degree as the dial, regular at `e ≥ 2` and singular at `e = 0`. Non-vacuity is machine-checked
-throughout: `c = 27√35/400 > 0`; the single-mode instance of `inverted_holder` at `δ₀` has both sums
-equal to `1` with `A = √(1/2) < 1`; the engine bound at `c, ν = 0, y₀ = 1` is `800/(27√35) ≈ 5.008 > 4`;
-and `blowupThreshold 0 = 0 < lyap ladderTwo 2 (4/7) = 25/7`, so the large-data hypothesis is
-satisfiable.
+So there is **no** `B ∧ O` contrast inside the truncated model family: it is regular at every degree
+`e ≥ 0`. Any genuine blowup needs the **untruncated** lattice.
 
 ---
 
@@ -1199,25 +1262,29 @@ theory waiting to be found.
 ## Open — where a dyadic blowup could still live
 
 The **frozen truncated model is now closed**: no finite-time blowup for any `κ`, forced or unforced,
-in energy or enstrophy (Stages O, O′, B, B′). Untruncated it is cited-only (Cheskidov). So the
-remaining directions all *leave* that model.
+in energy or enstrophy (Stages O, O′, B, B′), and in fact for every degree `e ≥ 0` — the repaired
+predicate makes it trivially globally regular (`Cascade/TruncatedRegularity.lean`). Untruncated it is
+cited-only (Cheskidov). So the remaining directions all *leave* that model.
 
-- **Blowup below the threshold (the positive half).** **DONE at `e = 0`** — see the
-  blowup section above: `no_global_solution_degree_zero` in `Cascade/BlowupDegreeZero.lean`.
-  What remains here is *fractional* `e`: the blowup should hold throughout `0 < α < 1/3`
-  (Cheskidov's theorem, untruncated), and reaching that interval needs real exponents
-  (`Real.rpow`) since `dyadicWeight` is `zpow` — integer `e` cannot represent it, and `e = 0` is
-  its integer endpoint. (`e = 1` needs no separate treatment: our barrier is marginal there, but
-  regularity at `α = 1/2` is Cheskidov's.) The positivity ingredient (`PositivityDegreeE`) is
-  already general in `e`, and
-  `inverted_holder` already covers every integer `e ≤ 0`; the only `e = 0`-specific input is that the
-  two norms coincide there. *Fidelity:* the dial is **not** free in the Boussinesq model — that is
-  exactly Stage R′ — so this is a result about the dyadic model *family*, with the Boussinesq branch
-  located at `e = 2`.
-- **Untruncated formalization of the Stage-R model.** Certifies rather than discovers: the
-  truncation is the *dangerous* direction (it removes the enstrophy sink, which is why the Stage-O′
-  bound is only linear in `T`), so the untruncated ladder should be at least as regular. Needs an
-  infinite-sum layer the library lacks entirely: a phase space (`Summable (fun k => u_k²)`,
+- **Blowup below the threshold (the positive half).** **WITHDRAWN at `e = 0`.** The former
+  `no_global_solution_degree_zero` and its two auxiliary files have been deleted: they rested on the
+  old, vacuous truncated predicate, and with the repaired predicate the truncated chain has no
+  finite-time blowup at any degree, so the statement is false. What remains is *fractional* `e` on
+  the **untruncated** lattice: the blowup should hold throughout `0 < α < 1/3` (Cheskidov's theorem,
+  untruncated), and reaching that interval needs real exponents (`Real.rpow`) since `dyadicWeight` is
+  `zpow`. (`e = 1` needs no separate treatment: our barrier is marginal there, but regularity at
+  `α = 1/2` is Cheskidov's.) `inverted_holder` covers every integer `e ≤ 0` but only as an abstract
+  inequality. *Fidelity:* the dial is **not** free in the Boussinesq model — that is exactly Stage R′
+  — so this is a question about the dyadic model *family*, with the Boussinesq branch located at
+  `e = 2`.
+- **Untruncated formalization of the Stage-R model.** The truncation is the **safe** direction, not
+  the dangerous one: it caps the weights (`weighted_sq_le_energy`: on a finite range every weighted
+  norm is dominated by the energy, so no truncated norm can outrun the energy). The linear-in-`T`
+  form of the Stage-O′ bound is an artifact of a Grönwall route that never used the finite-range norm
+  cap, not evidence that truncation creates blowup; an earlier version of this line said the opposite
+  and was wrong. The untruncated ladder is where the unbounded weights `4^k` can carry a diverging
+  enstrophy while the energy decays, so it is the direction that could be *less* regular, not more.
+  Needs an infinite-sum layer the library lacks entirely: a phase space (`Summable (fun k => u_k²)`,
   `Summable (fun k => 4^k u_k²)`), flux telescoping to `±∞` (energy conservation as "the boundary
   flux vanishes"), `tsum` versions of the estimates, and a solution concept on the infinite lattice.
   Value: removes the citation on the headline claim.

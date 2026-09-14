@@ -264,18 +264,22 @@ theorem boussinesqRHSDegreeE_scaling_covariant (s b : ℤ) (ν μ κ A B At Bt :
 
 /-! ### The general-degree truncated solution predicates -/
 
-/-- **Unforced truncated solution of the degree-`e` model.** -/
+/-- **Unforced truncated solution of the degree-`e` model.** The equation is imposed only on the
+retained shells `0 ≤ k < N`; see `Cascade/NoBlowup.lean` for why imposing it on all of `ℤ` is
+inconsistent with the boundary value `u t N = 0`. -/
 def IsUnforcedTruncatedSolutionE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u θ : ℝ → ℤ → ℝ) : Prop :=
-  (∀ t k, HasDerivAt (fun s => u s k) (velocityRHSDegreeE ν κ 1 0 e (u t) (θ t) k) t) ∧
-  (∀ t k, HasDerivAt (fun s => θ s k) (temperatureRHSDegreeE μ 1 1 e (u t) (θ t) k) t) ∧
+  (∀ t k, 0 ≤ k → k < (N : ℤ) →
+    HasDerivAt (fun s => u s k) (velocityRHSDegreeE ν κ 1 0 e (u t) (θ t) k) t) ∧
+  (∀ t k, 0 ≤ k → k < (N : ℤ) →
+    HasDerivAt (fun s => θ s k) (temperatureRHSDegreeE μ 1 1 e (u t) (θ t) k) t) ∧
   (∀ t, u t (-1) = 0 ∧ u t (N : ℤ) = 0 ∧ θ t (-1) = 0 ∧ θ t (N : ℤ) = 0)
 
-/-- **Forced truncated solution of the degree-`e` model.** -/
+/-- **Forced truncated solution of the degree-`e` model.** Equations on `0 ≤ k < N` only. -/
 def IsForcedTruncatedSolutionE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (f h : ℤ → ℝ)
     (u θ : ℝ → ℤ → ℝ) : Prop :=
-  (∀ t k, HasDerivAt (fun s => u s k)
+  (∀ t k, 0 ≤ k → k < (N : ℤ) → HasDerivAt (fun s => u s k)
     (velocityRHSDegreeE ν κ 1 0 e (u t) (θ t) k + f k) t) ∧
-  (∀ t k, HasDerivAt (fun s => θ s k)
+  (∀ t k, 0 ≤ k → k < (N : ℤ) → HasDerivAt (fun s => θ s k)
     (temperatureRHSDegreeE μ 1 1 e (u t) (θ t) k + h k) t) ∧
   (∀ t, u t (-1) = 0 ∧ u t (N : ℤ) = 0 ∧ θ t (-1) = 0 ∧ θ t (N : ℤ) = 0)
 
@@ -284,22 +288,22 @@ theorem isUnforcedTruncatedSolutionE_two_iff (ν μ κ : ℝ) (N : ℕ) (u θ : 
     IsUnforcedTruncatedSolutionE ν μ κ 2 N u θ ↔ IsUnforcedTruncatedSolution ν μ κ N u θ := by
   constructor
   · rintro ⟨h1, h2, h3⟩
-    refine ⟨fun t k => ?_, fun t k => ?_, h3⟩
-    · have hh := h1 t k
+    refine ⟨fun t k hk0 hkN => ?_, fun t k hk0 hkN => ?_, h3⟩
+    · have hh := h1 t k hk0 hkN
       rwa [show velocityRHSDegreeE ν κ 1 0 2 (u t) (θ t) k
           = dyadicVelocityRHS ν κ (u t) (θ t) k by
         rw [velocityRHSDegreeE, dyadicVelocityRHS, generalVelocityRHS]] at hh
-    · have hh := h2 t k
+    · have hh := h2 t k hk0 hkN
       rwa [show temperatureRHSDegreeE μ 1 1 2 (u t) (θ t) k
           = dyadicTemperatureRHS μ (u t) (θ t) k by
         rw [temperatureRHSDegreeE, dyadicTemperatureRHS, generalTemperatureRHS]] at hh
   · rintro ⟨h1, h2, h3⟩
-    refine ⟨fun t k => ?_, fun t k => ?_, h3⟩
-    · have hh := h1 t k
+    refine ⟨fun t k hk0 hkN => ?_, fun t k hk0 hkN => ?_, h3⟩
+    · have hh := h1 t k hk0 hkN
       rwa [show velocityRHSDegreeE ν κ 1 0 2 (u t) (θ t) k
           = dyadicVelocityRHS ν κ (u t) (θ t) k by
         rw [velocityRHSDegreeE, dyadicVelocityRHS, generalVelocityRHS]]
-    · have hh := h2 t k
+    · have hh := h2 t k hk0 hkN
       rwa [show temperatureRHSDegreeE μ 1 1 2 (u t) (θ t) k
           = dyadicTemperatureRHS μ (u t) (θ t) k by
         rw [temperatureRHSDegreeE, dyadicTemperatureRHS, generalTemperatureRHS]]
@@ -308,13 +312,13 @@ theorem isUnforcedTruncatedSolutionE_two_iff (ν μ κ : ℝ) (N : ℕ) (u θ : 
 theorem zero_is_unforcedTruncatedSolutionE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) :
     IsUnforcedTruncatedSolutionE ν μ κ e N (fun _ _ => (0 : ℝ)) (fun _ _ => (0 : ℝ)) := by
   refine ⟨?_, ?_, ?_⟩
-  · intro t k
+  · intro t k _ _
     have h0 : velocityRHSDegreeE ν κ 1 0 e (fun _ : ℤ => (0 : ℝ)) (fun _ : ℤ => (0 : ℝ)) k
         = 0 := by
       simp [velocityRHSDegreeE, boussinesqTransferU, dyadicWeight]
     rw [h0]
     exact hasDerivAt_const t 0
-  · intro t k
+  · intro t k _ _
     have h0 : temperatureRHSDegreeE μ 1 1 e (fun _ : ℤ => (0 : ℝ)) (fun _ : ℤ => (0 : ℝ)) k
         = 0 := by
       simp [temperatureRHSDegreeE, boussinesqTransferTheta, dyadicWeight]
@@ -551,9 +555,10 @@ theorem tempEnstrophyE_continuous (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u θ : �
     (h : IsUnforcedTruncatedSolutionE ν μ κ e N u θ) :
     Continuous fun t => tempEnstrophyE e (θ t) N := by
   unfold tempEnstrophyE
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k:ℤ)) ^ 2) := fun t =>
-    ((h.2.1 t (k:ℤ)).differentiableAt).pow 2
+    ((h.2.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact continuous_const.mul hdiff.continuous
 
 /-- Continuity of `t ↦ T(θ t)` (the library temperature enstrophy, weight `2^{2k}`). -/
@@ -561,9 +566,10 @@ theorem tempEnstrophy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u
     (h : IsUnforcedTruncatedSolutionE ν μ κ e N u θ) :
     Continuous fun t => tempEnstrophy (θ t) N := by
   unfold tempEnstrophy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k:ℤ)) ^ 2) := fun t =>
-    ((h.2.1 t (k:ℤ)).differentiableAt).pow 2
+    ((h.2.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact continuous_const.mul hdiff.continuous
 
 /-- Continuity of `t ↦ S(θ t)` (`entropy`, weight `1`). -/
@@ -571,9 +577,10 @@ theorem entropy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u θ : 
     (h : IsUnforcedTruncatedSolutionE ν μ κ e N u θ) :
     Continuous fun t => entropy (θ t) N := by
   unfold entropy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k:ℤ)) ^ 2) := fun t =>
-    ((h.2.1 t (k:ℤ)).differentiableAt).pow 2
+    ((h.2.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact hdiff.continuous
 
 /-- Continuity of `t ↦ E(u t)` (`velocityEnergy`, weight `1`). -/
@@ -581,9 +588,10 @@ theorem velocityEnergy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (
     (h : IsUnforcedTruncatedSolutionE ν μ κ e N u θ) :
     Continuous fun t => velocityEnergy (u t) N := by
   unfold velocityEnergy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k:ℤ)) ^ 2) := fun t =>
-    ((h.1 t (k:ℤ)).differentiableAt).pow 2
+    ((h.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact hdiff.continuous
 
 /-- Continuity of `t ↦ H(u t)` (`enstrophy`, weight `2^{2k}`). -/
@@ -591,9 +599,10 @@ theorem enstrophy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u θ 
     (h : IsUnforcedTruncatedSolutionE ν μ κ e N u θ) :
     Continuous fun t => enstrophy (u t) N := by
   unfold enstrophy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k:ℤ)) ^ 2) := fun t =>
-    ((h.1 t (k:ℤ)).differentiableAt).pow 2
+    ((h.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact continuous_const.mul hdiff.continuous
 
 /-- **The time derivative of the enstrophy along a degree-`e` solution.** -/
@@ -606,8 +615,9 @@ theorem enstrophy_hasDerivAt_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u θ 
       HasDerivAt (fun s : ℝ => dyadicWeight (2 * (k : ℤ)) * (u s (k : ℤ)) ^ 2)
         (dyadicWeight (2 * (k : ℤ))
           * (2 * u t (k : ℤ) * velocityRHSDegreeE ν κ 1 0 e (u t) (θ t) (k : ℤ))) t := by
-    intro k _
-    have hd := (h.1 t (k : ℤ)).pow 2
+    intro k hk
+    have hd := (h.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
     have hfun : ((fun s : ℝ => u s (k : ℤ)) ^ 2)
         = fun s : ℝ => (u s (k : ℤ)) ^ 2 := by
       funext s
@@ -654,8 +664,9 @@ theorem entropy_hasDerivAt_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) (u θ : 
     HasDerivAt.sum (u := Finset.range N)
       (A := fun k s => (θ s (k : ℤ)) ^ 2)
       (A' := fun k => 2 * θ t (k : ℤ) * temperatureRHSDegreeE μ 1 1 e (u t) (θ t) (k : ℤ))
-      (fun k _ => by
-        have hd := (h.2.1 t (k : ℤ)).pow 2
+      (fun k hk => by
+        have hd := (h.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+          (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
         have hfun : ((fun s : ℝ => θ s (k : ℤ)) ^ 2)
             = fun s : ℝ => (θ s (k : ℤ)) ^ 2 := by
           funext s
@@ -885,9 +896,10 @@ theorem forcedEnstrophy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) 
     (u θ : ℝ → ℤ → ℝ) (hsol : IsForcedTruncatedSolutionE ν μ κ e N f hf u θ) :
     Continuous fun t => enstrophy (u t) N := by
   unfold enstrophy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k:ℤ)) ^ 2) := fun t =>
-    ((hsol.1 t (k:ℤ)).differentiableAt).pow 2
+    ((hsol.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact continuous_const.mul hdiff.continuous
 
 /-- Continuity of the forced temperature enstrophy. -/
@@ -895,9 +907,10 @@ theorem forcedTempEnstrophy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : �
     (u θ : ℝ → ℤ → ℝ) (hsol : IsForcedTruncatedSolutionE ν μ κ e N f hf u θ) :
     Continuous fun t => tempEnstrophy (θ t) N := by
   unfold tempEnstrophy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k:ℤ)) ^ 2) := fun t =>
-    ((hsol.2.1 t (k:ℤ)).differentiableAt).pow 2
+    ((hsol.2.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact continuous_const.mul hdiff.continuous
 
 /-- **The time derivative of the forced enstrophy along a degree-`e` forced solution.** -/
@@ -911,8 +924,9 @@ theorem forcedEnstrophy_hasDerivAt_degreeE (ν μ κ : ℝ) (e : ℤ) (N : ℕ) 
         (dyadicWeight (2 * (k : ℤ))
           * (2 * u t (k : ℤ)
             * (velocityRHSDegreeE ν κ 1 0 e (u t) (θ t) (k : ℤ) + f (k : ℤ)))) t := by
-    intro k _
-    have hd := (hsol.1 t (k : ℤ)).pow 2
+    intro k hk
+    have hd := (hsol.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
     have hfun : ((fun s : ℝ => u s (k : ℤ)) ^ 2)
         = fun s : ℝ => (u s (k : ℤ)) ^ 2 := by
       funext s
@@ -1031,9 +1045,10 @@ theorem forcedVelocityEnergy_continuous_degreeE (ν μ κ : ℝ) (e : ℤ) (N : 
     (u θ : ℝ → ℤ → ℝ) (hsol : IsForcedTruncatedSolutionE ν μ κ e N f hf u θ) :
     Continuous fun t => velocityEnergy (u t) N := by
   unfold velocityEnergy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k:ℤ)) ^ 2) := fun t =>
-    ((hsol.1 t (k:ℤ)).differentiableAt).pow 2
+    ((hsol.1 t (k:ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact hdiff.continuous
 
 /-- **No finite-time enstrophy blowup at degree `e ≥ 2`, forced case** (no sign hypothesis on `κ`,

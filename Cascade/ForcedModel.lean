@@ -94,18 +94,22 @@ theorem forcedBoussinesqRHS_zero (ν μ κ : ℝ) (u θ : ℤ → ℝ) (k : ℤ)
 
 /-! ## 3. The forced truncated solution predicate
 
-The predicate has *exactly* the shape of `IsUnforcedTruncatedSolution`: the equations are imposed
-on all of `ℤ`, and the truncation is closed by the same Dirichlet conditions
-`u(-1) = u(N) = θ(-1) = θ(N) = 0`.  Only the RHS is forced. -/
+The predicate has the shape of `IsUnforcedTruncatedSolution`: the equations are imposed on the
+retained shells `0 ≤ k < N` only, and the truncation is closed by the Dirichlet conditions
+`u(-1) = u(N) = θ(-1) = θ(N) = 0`.  Only the RHS is forced.  (An earlier version imposed the
+equations on all of `ℤ`, which is inconsistent with `u t N = 0` for all `t`; see
+`Cascade/NoBlowup.lean`.) -/
 
 /-- **The forced truncated dyadic Boussinesq solution predicate.** `u θ : ℝ → ℤ → ℝ` are the
 velocity and temperature ladders as functions of time; `f` and `h` are the (time-independent)
 velocity and temperature force ladders.  On the shells `0, …, N-1` the ladders solve the frozen
 forced two-species dyadic Boussinesq ODE, and the truncation is closed by the Dirichlet boundary
-conditions `u(-1) = u(N) = θ(-1) = θ(N) = 0`. -/
+conditions `u(-1) = u(N) = θ(-1) = θ(N) = 0`.  The equation is imposed only on `0 ≤ k < N`. -/
 def IsForcedTruncatedSolution (ν μ κ : ℝ) (N : ℕ) (f h : ℤ → ℝ) (u θ : ℝ → ℤ → ℝ) : Prop :=
-  (∀ t k, HasDerivAt (fun s => u s k) (forcedVelocityRHS ν κ f (u t) (θ t) k) t) ∧
-  (∀ t k, HasDerivAt (fun s => θ s k) (forcedTemperatureRHS μ h (u t) (θ t) k) t) ∧
+  (∀ t k, 0 ≤ k → k < (N : ℤ) →
+    HasDerivAt (fun s => u s k) (forcedVelocityRHS ν κ f (u t) (θ t) k) t) ∧
+  (∀ t k, 0 ≤ k → k < (N : ℤ) →
+    HasDerivAt (fun s => θ s k) (forcedTemperatureRHS μ h (u t) (θ t) k) t) ∧
   (∀ t, u t (-1) = 0 ∧ u t (N : ℤ) = 0 ∧ θ t (-1) = 0 ∧ θ t (N : ℤ) = 0)
 
 /-- The zero-force predicate is the unforced predicate. -/
@@ -114,11 +118,11 @@ theorem isForcedTruncatedSolution_zero_iff (ν μ κ : ℝ) (N : ℕ) (u θ : �
       ↔ IsUnforcedTruncatedSolution ν μ κ N u θ := by
   constructor
   · rintro ⟨h1, h2, h3⟩
-    exact ⟨fun t k => by rw [← forcedVelocityRHS_zero]; exact h1 t k,
-      fun t k => by rw [← forcedTemperatureRHS_zero]; exact h2 t k, h3⟩
+    exact ⟨fun t k hk0 hkN => by rw [← forcedVelocityRHS_zero]; exact h1 t k hk0 hkN,
+      fun t k hk0 hkN => by rw [← forcedTemperatureRHS_zero]; exact h2 t k hk0 hkN, h3⟩
   · rintro ⟨h1, h2, h3⟩
-    exact ⟨fun t k => by rw [forcedVelocityRHS_zero]; exact h1 t k,
-      fun t k => by rw [forcedTemperatureRHS_zero]; exact h2 t k, h3⟩
+    exact ⟨fun t k hk0 hkN => by rw [forcedVelocityRHS_zero]; exact h1 t k hk0 hkN,
+      fun t k hk0 hkN => by rw [forcedTemperatureRHS_zero]; exact h2 t k hk0 hkN, h3⟩
 
 /-! ## 4. The truncated force-ladder energy -/
 
@@ -146,8 +150,9 @@ theorem forcedVelocityEnergy_hasDerivAt (ν μ κ : ℝ) (N : ℕ) (f h : ℤ �
     HasDerivAt.sum (u := Finset.range N)
       (A := fun k s => (u s (k : ℤ)) ^ 2)
       (A' := fun k => 2 * u t (k : ℤ) * forcedVelocityRHS ν κ f (u t) (θ t) (k : ℤ))
-      (fun k _ => by
-        have hd := (hsol.1 t (k : ℤ)).pow 2
+      (fun k hk => by
+        have hd := (hsol.1 t (k : ℤ) (Int.natCast_nonneg k)
+          (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
         have hfun : ((fun s : ℝ => u s (k : ℤ)) ^ 2)
             = fun s : ℝ => (u s (k : ℤ)) ^ 2 := by
           funext s
@@ -181,8 +186,9 @@ theorem forcedEntropy_hasDerivAt (ν μ κ : ℝ) (N : ℕ) (f h : ℤ → ℝ) 
     HasDerivAt.sum (u := Finset.range N)
       (A := fun k s => (θ s (k : ℤ)) ^ 2)
       (A' := fun k => 2 * θ t (k : ℤ) * forcedTemperatureRHS μ h (u t) (θ t) (k : ℤ))
-      (fun k _ => by
-        have hd := (hsol.2.1 t (k : ℤ)).pow 2
+      (fun k hk => by
+        have hd := (hsol.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+          (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
         have hfun : ((fun s : ℝ => θ s (k : ℤ)) ^ 2)
             = fun s : ℝ => (θ s (k : ℤ)) ^ 2 := by
           funext s
@@ -208,9 +214,10 @@ theorem forcedVelocityEnergy_continuous (ν μ κ : ℝ) (N : ℕ) (f h : ℤ �
     (u θ : ℝ → ℤ → ℝ) (hsol : IsForcedTruncatedSolution ν μ κ N f h u θ) :
     Continuous fun t => velocityEnergy (u t) N := by
   unfold velocityEnergy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k : ℤ)) ^ 2) := fun t =>
-    ((hsol.1 t (k : ℤ)).differentiableAt).pow 2
+    ((hsol.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact hdiff.continuous
 
 /-- The entropy is continuous along a forced solution. -/
@@ -218,9 +225,10 @@ theorem forcedEntropy_continuous (ν μ κ : ℝ) (N : ℕ) (f h : ℤ → ℝ)
     (u θ : ℝ → ℤ → ℝ) (hsol : IsForcedTruncatedSolution ν μ κ N f h u θ) :
     Continuous fun t => entropy (θ t) N := by
   unfold entropy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k : ℤ)) ^ 2) := fun t =>
-    ((hsol.2.1 t (k : ℤ)).differentiableAt).pow 2
+    ((hsol.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact hdiff.continuous
 
 /-! ## 6. Cauchy–Schwarz for the force work -/
@@ -520,8 +528,9 @@ theorem forcedEnstrophy_hasDerivAt (ν μ κ : ℝ) (N : ℕ) (f h : ℤ → ℝ
       HasDerivAt (fun s : ℝ => dyadicWeight (2 * (k : ℤ)) * (u s (k : ℤ)) ^ 2)
         (dyadicWeight (2 * (k : ℤ))
           * (2 * u t (k : ℤ) * forcedVelocityRHS ν κ f (u t) (θ t) (k : ℤ))) t := by
-    intro k _
-    have hd := (hsol.1 t (k : ℤ)).pow 2
+    intro k hk
+    have hd := (hsol.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
     have hfun : ((fun s : ℝ => u s (k : ℤ)) ^ 2)
         = fun s : ℝ => (u s (k : ℤ)) ^ 2 := by
       funext s
@@ -709,9 +718,10 @@ theorem forced_truncated_enstrophy_bounded (ν μ κ : ℝ) (hν : 0 < ν) (hκ 
     (hE₀ t ht).trans (le_max_left _ _)
   have hTcont : Continuous fun t => tempEnstrophy (θ t) N := by
     unfold tempEnstrophy
-    refine continuous_finsetSum _ fun k _ => ?_
+    refine continuous_finsetSum _ fun k hk => ?_
     have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k : ℤ)) ^ 2) := fun t =>
-      ((hsol.2.1 t (k : ℤ)).differentiableAt).pow 2
+      ((hsol.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+        (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
     exact continuous_const.mul hdiff.continuous
   obtain ⟨T₀, hT₀⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := T)).bddAbove_image hTcont.continuousOn
   set T_max : ℝ := max T₀ 0 with hT_max
@@ -774,14 +784,14 @@ theorem zero_is_forcedTruncatedSolution (ν μ κ : ℝ) (N : ℕ) :
     IsForcedTruncatedSolution ν μ κ N (fun _ => 0) (fun _ => 0)
       (fun _ _ => (0 : ℝ)) (fun _ _ => (0 : ℝ)) := by
   refine ⟨?_, ?_, ?_⟩
-  · intro t k
+  · intro t k _ _
     have h0 : forcedVelocityRHS ν κ (fun _ : ℤ => (0 : ℝ))
         (fun _ : ℤ => (0 : ℝ)) (fun _ : ℤ => (0 : ℝ)) k = 0 := by
       simp [forcedVelocityRHS, dyadicVelocityRHS, generalVelocityRHS, boussinesqTransferU,
         dyadicWeight]
     rw [h0]
     exact hasDerivAt_const t 0
-  · intro t k
+  · intro t k _ _
     have h0 : forcedTemperatureRHS μ (fun _ : ℤ => (0 : ℝ))
         (fun _ : ℤ => (0 : ℝ)) (fun _ : ℤ => (0 : ℝ)) k = 0 := by
       simp [forcedTemperatureRHS, dyadicTemperatureRHS, generalTemperatureRHS,

@@ -16,6 +16,14 @@ quantity from *above* (no blowup); here we prove the reverse implication: `y' �
 rest of the blowup argument: it depends only on `Cascade.DissipationThreshold` (for `dyadicWeight`)
 and Mathlib.
 
+**Currently unused.**  This file is abstract — a reversed-Bernoulli ODE engine, an inverted Hölder
+inequality and some elementary inequalities — and is independent of any solution predicate, so it
+is mathematically correct.  But its only consumers were `Cascade/BlowupRate.lean` and
+`Cascade/BlowupDegreeZero.lean`, both of which have been **deleted**: with the repaired truncated
+predicate (equations on the retained shells `0 ≤ k < N` only) the truncated model has no finite-time
+blowup, so the blowup capstone is not merely vacuous but false.  Nothing here is unsound; the file
+is simply retained as an abstract engine in case a future untruncated-lattice argument needs it.
+
 ## Contents
 
 1. **The reversed Bernoulli engine.**  `le_of_deriv_ge_mul_sqrt` and its non-existence forms

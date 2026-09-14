@@ -44,11 +44,13 @@ Viscosity dominates: the Grönwall engine turns this into a bound on every compa
 
 The statement carries the explicit truncation / Dirichlet hypotheses (the model is *forced* to
 be closed at the two ends of the retained range of shells) and the physical sign hypotheses
-`ν > 0`, `μ ≥ 0`, `κ ≥ 0`. It is a *qualitative contrast to Stage B*: the Stage-B construction
-exhibits finite-time blowup **for the forced** model, whereas here the unforced model is
-uniformly bounded, because the exactly-conserving transfer provides no interior source and the
-only source (buoyancy) is dominated by viscosity once the entropy has been capped by its
-non-increasing evolution.
+`ν > 0`, `μ ≥ 0`, `κ ≥ 0`. It is the *unforced* counterpart of the forced Stage-B results of
+`Cascade/ForcedModel.lean`: both models are bounded, because the exactly-conserving transfer
+provides no interior source and the only source (buoyancy) is dominated by viscosity once the
+entropy has been capped by its non-increasing evolution. An earlier version of this paragraph
+described a finite-time blowup **for the forced** Stage-B model; no such theorem survives — the
+solution-level blowup capstone has been deleted as false (see
+`Cascade/TruncatedRegularity.lean`).
 
 The non-vacuity section at the end checks that the solution predicate is inhabited (by the zero
 equilibrium) and that the concrete inequality chain is non-trivial at a non-zero state.
@@ -72,11 +74,19 @@ namespace Cascade
 velocity and temperature ladders as functions of time; `ν`, `μ`, `κ` are the viscosity, thermal
 diffusivity and buoyancy coupling. On the shells `0, …, N-1` the ladders solve the frozen
 two-species dyadic Boussinesq ODE `Cascade/Boussinesq.lean`, and the truncation is closed by the
-Dirichlet boundary conditions `u(-1) = u(N) = θ(-1) = θ(N) = 0`. The equations are imposed on
-*all* of `ℤ` (the boundary conditions make the outside irrelevant for the energy balance). -/
+Dirichlet boundary conditions `u(-1) = u(N) = θ(-1) = θ(N) = 0`.
+
+**The equation is imposed only on the retained shells `0 ≤ k < N`.** An earlier version imposed it
+on *all* of `ℤ`, which is inconsistent: the boundary value `u t N = 0` holds for every `t`, so the
+derivative of `u · N` is `0`, and the equation at `k = N` then forces `2^N (u t (N-1))² = 0`, hence
+`u t (N-1) = 0` for all `t` — and the same step cascades downward, so the retained range must vanish
+identically. Every theorem assuming that predicate was therefore vacuous. See
+`Cascade/TruncatedRegularity.lean` for the (trivial) regularity statement that actually holds. -/
 def IsUnforcedTruncatedSolution (ν μ κ : ℝ) (N : ℕ) (u θ : ℝ → ℤ → ℝ) : Prop :=
-  (∀ t k, HasDerivAt (fun s => u s k) (dyadicVelocityRHS ν κ (u t) (θ t) k) t) ∧
-  (∀ t k, HasDerivAt (fun s => θ s k) (dyadicTemperatureRHS μ (u t) (θ t) k) t) ∧
+  (∀ t k, 0 ≤ k → k < (N : ℤ) →
+    HasDerivAt (fun s => u s k) (dyadicVelocityRHS ν κ (u t) (θ t) k) t) ∧
+  (∀ t k, 0 ≤ k → k < (N : ℤ) →
+    HasDerivAt (fun s => θ s k) (dyadicTemperatureRHS μ (u t) (θ t) k) t) ∧
   (∀ t, u t (-1) = 0 ∧ u t (N : ℤ) = 0 ∧ θ t (-1) = 0 ∧ θ t (N : ℤ) = 0)
 
 /-- **Velocity energy** on the truncated range: `∑_{k<N} u_k²`. -/
@@ -124,8 +134,9 @@ theorem velocityEnergy_hasDerivAt (ν μ κ : ℝ) (N : ℕ) (u θ : ℝ → ℤ
     HasDerivAt.sum (u := Finset.range N)
       (A := fun k s => (u s (k : ℤ)) ^ 2)
       (A' := fun k => 2 * u t (k : ℤ) * dyadicVelocityRHS ν κ (u t) (θ t) (k : ℤ))
-      (fun k _ => by
-        have hd := (h.1 t (k : ℤ)).pow 2
+      (fun k hk => by
+        have hd := (h.1 t (k : ℤ) (Int.natCast_nonneg k)
+          (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
         have hfun : ((fun s : ℝ => u s (k : ℤ)) ^ 2)
             = fun s : ℝ => (u s (k : ℤ)) ^ 2 := by
           funext s
@@ -160,8 +171,9 @@ theorem entropy_hasDerivAt (ν μ κ : ℝ) (N : ℕ) (u θ : ℝ → ℤ → �
     HasDerivAt.sum (u := Finset.range N)
       (A := fun k s => (θ s (k : ℤ)) ^ 2)
       (A' := fun k => 2 * θ t (k : ℤ) * dyadicTemperatureRHS μ (u t) (θ t) (k : ℤ))
-      (fun k _ => by
-        have hd := (h.2.1 t (k : ℤ)).pow 2
+      (fun k hk => by
+        have hd := (h.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+          (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
         have hfun : ((fun s : ℝ => θ s (k : ℤ)) ^ 2)
             = fun s : ℝ => (θ s (k : ℤ)) ^ 2 := by
           funext s
@@ -285,12 +297,12 @@ solve the ODE, and the Dirichlet conditions hold trivially. This witnesses that
 theorem zero_is_unforcedTruncatedSolution (ν μ κ : ℝ) (N : ℕ) :
     IsUnforcedTruncatedSolution ν μ κ N (fun _ _ => (0 : ℝ)) (fun _ _ => (0 : ℝ)) := by
   refine ⟨?_, ?_, ?_⟩
-  · intro t k
+  · intro t k _ _
     have h0 : dyadicVelocityRHS ν κ (fun _ : ℤ => (0 : ℝ)) (fun _ : ℤ => (0 : ℝ)) k = 0 := by
       simp [dyadicVelocityRHS, generalVelocityRHS, boussinesqTransferU, dyadicWeight]
     rw [h0]
     exact hasDerivAt_const t 0
-  · intro t k
+  · intro t k _ _
     have h0 : dyadicTemperatureRHS μ (fun _ : ℤ => (0 : ℝ)) (fun _ : ℤ => (0 : ℝ)) k = 0 := by
       simp [dyadicTemperatureRHS, generalTemperatureRHS, boussinesqTransferTheta, dyadicWeight]
     rw [h0]

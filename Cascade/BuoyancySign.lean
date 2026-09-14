@@ -624,9 +624,10 @@ theorem truncated_unforced_enstrophy_bounded_abs (ν μ κ : ℝ) (hν : 0 < ν)
     (velocityEnergy_continuous ν μ κ N u θ h).continuousOn hT
   have hTcont : Continuous fun t => tempEnstrophy (θ t) N := by
     unfold tempEnstrophy
-    refine continuous_finsetSum _ fun k _ => ?_
+    refine continuous_finsetSum _ fun k hk => ?_
     have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k : ℤ)) ^ 2) := fun t =>
-      ((h.2.1 t (k : ℤ)).differentiableAt).pow 2
+      ((h.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+        (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
     exact continuous_const.mul hdiff.continuous
   obtain ⟨T₀, hT₀⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := T)).bddAbove_image hTcont.continuousOn
   set T_max : ℝ := max T₀ 0 with hT_max
@@ -794,9 +795,10 @@ theorem forced_truncated_enstrophy_bounded_abs (ν μ κ : ℝ) (hν : 0 < ν)
     (hE₀ t ht).trans (le_max_left _ _)
   have hTcont : Continuous fun t => tempEnstrophy (θ t) N := by
     unfold tempEnstrophy
-    refine continuous_finsetSum _ fun k _ => ?_
+    refine continuous_finsetSum _ fun k hk => ?_
     have hdiff : Differentiable ℝ (fun t : ℝ => (θ t (k : ℤ)) ^ 2) := fun t =>
-      ((hsol.2.1 t (k : ℤ)).differentiableAt).pow 2
+      ((hsol.2.1 t (k : ℤ) (Int.natCast_nonneg k)
+        (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
     exact continuous_const.mul hdiff.continuous
   obtain ⟨T₀, hT₀⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := T)).bddAbove_image hTcont.continuousOn
   set T_max : ℝ := max T₀ 0 with hT_max

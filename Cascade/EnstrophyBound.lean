@@ -73,6 +73,12 @@ compact `[0, T]` by a constant **linear in `T`**, so there is no finite-time blo
 (`Cascade.le_of_deriv_le_bernoulli`) gives the **uniform-in-time** bound
 `H t ≤ max (H 0) (3 E_max/ν)²` directly.
 
+The linear-in-`T` form is an artifact of this particular Grönwall route: the argument above never
+uses that the range `k < N` is finite, i.e. it never uses the finite-range norm cap. Truncation is
+the **safe** direction, not a dangerous one: on a finite range every weighted norm is dominated by
+the energy (`Cascade.weighted_sq_le_energy`), so the enstrophy cannot outrun the energy and there is
+no blowup at any dissipation degree `e ≥ 0` and any `κ` (`Cascade/TruncatedRegularity.lean`).
+
 ## Contents
 
 1. `enstrophy_hasDerivAt` — the time derivative of `H` along a solution.
@@ -111,8 +117,9 @@ theorem enstrophy_hasDerivAt (ν μ κ : ℝ) (N : ℕ) (u θ : ℝ → ℤ → 
       HasDerivAt (fun s : ℝ => dyadicWeight (2 * (k : ℤ)) * (u s (k : ℤ)) ^ 2)
         (dyadicWeight (2 * (k : ℤ))
           * (2 * u t (k : ℤ) * dyadicVelocityRHS ν κ (u t) (θ t) (k : ℤ))) t := by
-    intro k _
-    have hd := (h.1 t (k : ℤ)).pow 2
+    intro k hk
+    have hd := (h.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).pow 2
     have hfun : ((fun s : ℝ => u s (k : ℤ)) ^ 2)
         = fun s : ℝ => (u s (k : ℤ)) ^ 2 := by
       funext s
@@ -388,9 +395,10 @@ theorem velocityEnergy_continuous (ν μ κ : ℝ) (N : ℕ) (u θ : ℝ → ℤ
     (h : IsUnforcedTruncatedSolution ν μ κ N u θ) :
     Continuous fun t => velocityEnergy (u t) N := by
   unfold velocityEnergy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k : ℤ)) ^ 2) := fun t =>
-    ((h.1 t (k : ℤ)).differentiableAt).pow 2
+    ((h.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact hdiff.continuous
 
 /-- The enstrophy is continuous along a solution (the capstone carries it as a hypothesis, but it
@@ -399,9 +407,10 @@ theorem enstrophy_continuous (ν μ κ : ℝ) (N : ℕ) (u θ : ℝ → ℤ → 
     (h : IsUnforcedTruncatedSolution ν μ κ N u θ) :
     Continuous fun t => enstrophy (u t) N := by
   unfold enstrophy
-  refine continuous_finsetSum _ fun k _ => ?_
+  refine continuous_finsetSum _ fun k hk => ?_
   have hdiff : Differentiable ℝ (fun t : ℝ => (u t (k : ℤ)) ^ 2) := fun t =>
-    ((h.1 t (k : ℤ)).differentiableAt).pow 2
+    ((h.1 t (k : ℤ) (Int.natCast_nonneg k)
+      (by exact_mod_cast (Finset.mem_range.mp hk))).differentiableAt).pow 2
   exact continuous_const.mul hdiff.continuous
 
 /-- **The Stage-O′ capstone: no finite-time enstrophy (`H¹`) blowup.** Along any unforced
