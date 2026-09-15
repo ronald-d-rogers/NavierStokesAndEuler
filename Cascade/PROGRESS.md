@@ -111,12 +111,16 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/Bernstein.lean` | Bernstein chain, part 2 (`‖f‖∞ ≤ √(vol ball) ‖f‖₂`) |
 | `Cascade/BernsteinGrowth.lean` | Bernstein chain, part 3 (`L² → L∞` with the `N^{d/2}` exponent; gradient form) |
 | `Criticality/BernsteinExport.lean` | re-exports the moved Pillar A under `Criticality.*` |
+| `Cascade/DimensionBlind.lean` | the one-mode model is dimension-blind: the Bernstein constraint is implied by the definitions for every `d ≥ 2`, so it cannot make `d` intrinsic |
+| `Cascade/IntermittencyThreshold.lean` | the intermittency criterion over real `n`: critical at `δ = n − 2`, and Palasek's crossover at 5 as a theorem conditional on the measured `2 < δ ≤ 3` |
+| `Cascade/SelfSimilarSolution.lean` | the flat self-similar solution `u_k = (1/3)·2^{−k}·(T−t)^{−1}` of the inviscid untruncated system — zero jitter, level unbounded (see the section below) |
 
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
 `BuoyancySign`, `DissipationThreshold`, `PerShellThreshold`, `BlowupEngine`, `TruncatedRegularity`,
-`LayerTrap`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
+`LayerTrap`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain), and — more
+recently — `DimensionBlind`, `IntermittencyThreshold`, `SelfSimilarSolution`.
 (`PositivityDegreeE`, `BlowupRate` and `BlowupDegreeZero` have been deleted — see the correctness
 episode below.)
 
@@ -1548,6 +1552,41 @@ the bottom of each file.
     concurrently produce a merge that happens to compile only by luck — check `list_agents` for a
     `running` entry before launching a second agent, and treat a "finished" notice as insufficient
     proof that the previous turn is over.
+
+---
+
+## The one divergence we can actually certify: the flat self-similar solution (2026-09-15)
+
+`Cascade/SelfSimilarSolution.lean`.  The inviscid, unforced shell system (`ν = κ = 0`) on the whole
+lattice `k : ℤ` has the exact self-similar solution
+
+`u_k(t) = (1/3) · 2^{−k} · (T − t)^{−1}`,
+
+verified in Lean (`selfSimilar_hasDerivAt`) against the repo's **own** `velocityRHSDegreeE` rather
+than a hand-restated right-hand side, for every `k : ℤ` and every degree `e` (the inviscid transfer
+does not see `e`).  Its vorticity is `a_k = 2^k u_k = (1/3)(T − t)^{−1}`, **independent of `k`**
+(`selfSimilar_vorticity`), so the profile is flat, the local exponent is `0` at every shell and every
+time, and this explosion carries **exactly zero jitter** — which is the point of the figure
+`Cascade/explosion.svg`.  The level is unbounded as `t → T⁻`, in the elementary form
+`selfSimilar_level_unbounded : ∀ M, ∃ t < T, M < (1/3)(T − t)^{−1}`.  The identity was also checked
+independently in exact rational arithmetic before the Lean was written.
+
+**What this is not** — stated plainly, because this project has already crossed this line once:
+
+* **Not a blow-up of this repo's model.**  The truncated system provably cannot blow up
+  (`Cascade/TruncatedRegularity.lean`); this is the *untruncated inviscid* system, a different
+  object.  The two statements are not in tension because they are about different systems.
+* **Not a blow-up from finite-enstrophy data.**  Because the profile is flat,
+  `Σ_{k∈ℤ} a_k² = Σ_{k∈ℤ} (1/3)²(T−t)^{−2}` diverges at **every** `t < T`, not merely at `T`.  The
+  solution has infinite enstrophy from the outset; what diverges is the **level**.
+* **Not new mathematics.**  Explicit self-similar solutions of the inviscid dyadic model are standard
+  in the literature; the contribution is machine verification in this repo's notation, and the
+  docstring attributes the specific form to no paper.
+
+The honest description: the first *verified* divergence in this project, and it is a self-similarity
+statement about a system the project does not otherwise study.  Its content is the mirror of the
+withdrawn claim — the withdrawn one asserted a blow-up of the truncated model and was false; this one
+is true, and is about a different system, with the limits written on its face.
 
 ---
 

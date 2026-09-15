@@ -26,3 +26,4 @@ import Cascade.ScaleObstruction
 import Cascade.BernsteinTransfer
 import Cascade.DimensionBlind
 import Cascade.IntermittencyThreshold
+import Cascade.SelfSimilarSolution
