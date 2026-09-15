@@ -42,7 +42,12 @@ the lowest integer in the *unconditional* range, so the frozen model sits at the
 range — but it is *above* the barrier threshold `e = 1`, which coincides with Cheskidov's
 global-regularity threshold `α = 1/2` (Cheskidov's finite-time blowup is at `α < 1/3`, i.e.
 `e < 2/3`; the 3D Navier–Stokes exponent `α = 2/5` (`e = 4/5`) lies below the barrier threshold and
-is not representable by an integer `e`).
+is not representable by an integer `e`).  The open gap is `α ∈ [1/3, 2/5)`, *not* `[1/3, 1/2)`:
+the upper part was closed by Barbato–Morandin–Romito, *Smooth solutions for the dyadic model*,
+Nonlinearity **24** (2011) 3083–3097 (arXiv:1007.3401), Theorem A, who prove existence, uniqueness
+and smoothness for `β ∈ (2, 5/2]` in their normalisation — i.e. `α = 1/β ∈ [2/5, 1/2)` — and who
+state that this is the range "corresponding ... to the three dimensional Navier–Stokes equations".
+So the 3D-calibrated exponent `α = 2/5` is a *known regular* endpoint, not an open case.
 
 ## Contents
 

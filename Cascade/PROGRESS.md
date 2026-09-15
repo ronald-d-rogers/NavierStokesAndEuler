@@ -379,11 +379,35 @@ hypothesis *is* satisfied at `d = 2`, so "the law holds nowhere else" is not an 
 
 **Why it matters for the project.** Write `α = d/2` (Cheskidov's dissipation degree). Then
 `d = 2` is `α = 1`. Cheskidov's dyadic model is regular for `α ≥ 1/2` and blows up in finite time
-for `α < 1/3`, with an open gap in between; his model *includes* the force. So the model this
+for `α < 1/3`; his model *includes* the force. So the model this
 library froze at Stage R is in the **provably regular** regime, and Stage B's forced blowup is not
-merely unproven there — it is impossible. The dyadic exponent whose estimates match 3D
-Navier–Stokes is `α = 2/5`, which lies *inside* the open gap. That tension is the honest end of
-this line of the project; see the Stage B discussion below.
+merely unproven there — it is impossible.
+
+**CORRECTION — the gap is narrower than this file used to say.** The open gap is
+`α ∈ [1/3, 2/5)`, *not* `[1/3, 1/2)`. Barbato–Morandin–Romito, *Smooth solutions for the dyadic
+model*, Nonlinearity **24** (2011) 3083–3097 (arXiv:1007.3401), Theorem A, prove existence,
+uniqueness and smoothness for `β ∈ (2, 5/2]` in their normalisation; that parameter is `α = 1/β`
+here, so they give `α ∈ [2/5, 1/2)`. Together with Cheskidov's `α ≥ 1/2` this is global regularity
+for **all `α ≥ 2/5`**. The same paper states explicitly that `β ∈ (2, 5/2]` "is essentially the one
+corresponding, within the simplification of the model, to the three dimensional Navier–Stokes
+equations". So the dyadic range corresponding to 3D Navier–Stokes is *provably globally regular*,
+and the only undecided range is `α ∈ [1/3, 2/5)`.
+
+**The calibration, and what it does to the fidelity story.** Matching the model's sharp dyadic
+estimate against the `d`-dimensional sharp `H¹` estimate gives `α(d) = 2/(d+2)`, equivalently
+`d = 2/α − 2`. (This matching is our own computation, not a theorem; what follows is why it is
+credible.) What this is *not*, and must be said plainly: the values `2/5` at `d = 3` and `1/3` at
+`d = 4` were already in this project's notes as "Cheskidov's quoted values" *before* the matching was
+carried out. So the matching reproducing them is a consistency check, not independent confirmation,
+and it must not be recorded as a discovery. The literature statements themselves are Cheskidov's
+abstract — the model with `α = 1/3` "enjoys the same estimates on the nonlinear term as the 4D
+Navier–Stokes equations", and `α(4) = 2/6 = 1/3` — and BMR's identification above, 3D at
+`α ∈ [2/5, 1/2)` with `α(3) = 2/5`. Under that map the open dyadic gap `α ∈ [1/3, 2/5)`
+corresponds to `d ∈ (3, 4]` — dimensions *above* the physical one. At the physical `d = 3` the
+calibrated model lands exactly on BMR's regularity endpoint. The caricature is therefore decided —
+in the **regular** direction — at the dimension whose PDE is open, and undecided only for
+non-physical `d ∈ (3, 4)`. That, not the exponent arithmetic, is the honest end of this line; see
+the Stage B discussion below and `Cascade/DimensionBlind.lean`.
 
 ### Two-species energy balance (Stage R deliverable)
 
@@ -1116,11 +1140,14 @@ convention that `tempEnstrophy` carries the dissipation weight.
 
 **The finding.** The barrier's marginal point is `e = 1`, i.e. `α = 1/2` — which is **exactly
 Cheskidov's global-regularity threshold**. So the natural energy method is *exponent-sharp*: it dies
-at the same boundary as the state of the art. That is why the open gap `(2/3, 1)` in `α` looks real
-rather than technical — the obvious method cannot cross it. It does **not** prove some cleverer
-argument cannot; only that this one is sharp. And the exponent whose nonlinear estimates match 3D
-Navier–Stokes is `α = 2/5` (`e = 4/5`), which lies *below* the barrier threshold and inside the
-open gap: that is the formal content of "this toy model is easier than 3D Navier–Stokes".
+at the same boundary as the state of the art, and the obvious method cannot cross the open gap. It
+does **not** prove some cleverer argument cannot; only that this one is sharp. And the exponent
+whose nonlinear estimates match 3D Navier–Stokes is `α = 2/5` (`e = 4/5`), which lies *below* the
+barrier threshold: that is the formal content of "this toy model is easier than 3D Navier–Stokes".
+**Correction:** the open gap is `α ∈ [1/3, 2/5)`, i.e. `e ∈ [2/3, 4/5)`, not `(2/3, 1)`;
+Barbato–Morandin–Romito (Nonlinearity **24** (2011), arXiv:1007.3401) closed `α ∈ [2/5, 1/2)`, and
+`α = 2/5` is their regularity endpoint — so the 3D-calibrated exponent is *regular*, not open. See
+the correction block in the Stage R′ section.
 
 **Integer restriction.** `dyadicWeight` is `zpow`, so `e : ℤ`. The unconditional range is `e ≥ 2`,
 and the model's own exponent is `e = 2` — so the model sits at the **bottom** of the range the
@@ -1391,8 +1418,9 @@ cited-only (Cheskidov). So the remaining directions all *leave* that model.
 - **The `α = 2/5` sharp-estimate statement.** Formalize that the dissipation-dominance estimate is
   sharp at the exponent whose nonlinear estimates match 3D Navier–Stokes — a machine-checked version
   of "why this dyadic model is easier than 3D NS". Cheap, and the honest capstone to the fidelity
-  story. Note `α = 2/5` lies in Cheskidov's *open gap*, so only the estimate can be formalized, not
-  the verdict.
+  story. **Corrected:** `α = 2/5` is *not* in the open gap — Barbato–Morandin–Romito prove global
+  regularity there (Theorem A, arXiv:1007.3401), so the *verdict* at this exponent is a known
+  theorem (theirs, not ours) and what remains ours is only the estimate.
 - **Stage B for the AB construction proper.** Unchanged and untouched: AB build the force together
   with the solution, and their blowup is for the PDE, not a shell model.
 
@@ -1520,3 +1548,62 @@ the bottom of each file.
     concurrently produce a merge that happens to compile only by luck — check `list_agents` for a
     `running` entry before launching a second agent, and treat a "finished" notice as insufficient
     proof that the previous turn is over.
+
+---
+
+## Prior art: the obstruction remark, and what the literature already has (2026-09-15)
+
+The Palasek/Tao exchange that started this project is dated **2026-09-08** (`Cascade/VISION.md` has
+the right date; earlier notes here said September 2025 — wrong). Raw notes with all quotes and
+links: `CASCADE_PALASEK_PRIOR_ART.md` (agent write-up, not independently re-verified except where
+marked ✓ below).
+
+**✓ Verified first-hand here (fetched from the source).**
+
+* **Cheskidov**, *Blow-up in finite time for the dyadic model of the Navier–Stokes equations*,
+  Trans. AMS **360** (2008) 5101–5120, arXiv:math/0601074. Abstract: local regularity `α > 1/3`,
+  global regularity `α ≥ 1/2`, finite-time blow-up `α < 1/3`, and "the model with `α = 1/3` enjoys
+  the same estimates on the nonlinear term as the 4D Navier–Stokes equations".
+* **Barbato–Morandin–Romito**, *Smooth solutions for the dyadic model*, Nonlinearity **24** (2011)
+  3083–3097, arXiv:1007.3401, Theorem A: for `β ∈ (2, 5/2]` every nonnegative `ℓ²` datum has a
+  unique smooth solution. Their normalisation is dissipation `λ_n²` with nonlinearity exponent `β`,
+  so `α = 1/β` and this is `α ∈ [2/5, 1/2)`. The paper states that `β ∈ (2, 5/2]` "is essentially
+  the one corresponding, within the simplification of the model, to the three dimensional
+  Navier–Stokes equations".
+* **Consequence**, stated without decoration because it is the punchline of the fidelity question:
+  global regularity holds for **all `α ≥ 2/5`**, the open gap is `α ∈ [1/3, 2/5)`, and *the dyadic
+  range corresponding to 3D Navier–Stokes is globally regular*. The literature has this; it is not
+  ours to claim. The toy does not merely fail to blow up at the physical dimension — it provably
+  cannot, and that was known before this project began.
+
+**Reported by the prior-art check, not independently re-verified here.** Pointers only.
+
+* Palasek's remark itself — Bernstein `N_k^{3/2}` versus depletion `N_k²`, with "in high dimension
+  there is no obstruction!", Mastodon 2026-09-08 — appears **nowhere** in written form, including in
+  the paper he links in the same post (arXiv:2605.13827), whose full text reportedly contains no
+  "Bernstein" and no high-dimension discussion. The rigorous obstruction (the force is necessary)
+  that *is* written up there is attributed to **Looi**, whose proof is public only as seminar
+  abstracts (Princeton, Caltech, 2026).
+* The `d = 5` threshold is documented via a different route — Tao's blog (2014) and the
+  Cheskidov–Dai–Friedlander survey (JMFM **25** (2023), arXiv:2209.10203): "5D is a common threshold
+  for models exhibiting a blow-up" — *not* via Palasek's Bernstein-amplitude comparison.
+* **Dimension-dependent dyadic models do exist**, but the dimension enters as the *nonlinearity
+  exponent*, not as an intrinsic per-shell `N_k^{d/2}` amplitude factor. The intermittency-dimension
+  models (Cheskidov–Dai, Proc. Roy. Soc. Edinb. A **149** (2019) 429–446, arXiv:1510.00379, for the
+  definition of intermittency dimension; CDS survey eq. (2.7); Dai arXiv:2006.15094 and
+  arXiv:2108.12913) have `θ = (2+n−δ)/2` with `a_j ~ ‖u_j‖_{L²}`, dimension-free.
+* The dimension ↔ dissipation-degree trade-off is therefore in the literature as a *frequency
+  rescaling*: CSDF "`(3.6)` is equivalent to `(3.7)` with `θ = 1/γ`", and Dai's `α = 1/θ` via
+  `λ_j = λ̄_j^α`, i.e. generalised diffusion `(−Δ)^α`. The additive `2 ↦ 2 − d` bookkeeping is
+  trivial algebra and is not recorded in that form.
+* Nobody has publicly done Tao's suggested Boussinesq-dyadic exercise; his reply has no public
+  descendants.
+
+**What this means for the project.** The correct way to make the spatial dimension intrinsic to a
+dyadic model is already known — put it in the nonlinearity exponent, via the intermittency
+dimension — and that model is equivalent, by frequency rescaling, to a change of the dissipation
+degree. So the "degree dial" this project spent its time on and the dimension are *the same knob* in
+the literature (`θ = 1/γ`, `α = 1/θ`). That is the final explanation of why no repair of the model
+could produce a new mechanism; it closes the fidelity question. `Cascade/DimensionBlind.lean` shows
+the one-mode model cannot carry `d` intrinsically, and the literature shows that the model which
+does carry it is the degree dial again.

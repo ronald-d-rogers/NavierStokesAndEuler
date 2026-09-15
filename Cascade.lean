@@ -24,3 +24,4 @@ import Cascade.TruncatedRegularity
 import Cascade.BlowupEngine
 import Cascade.ScaleObstruction
 import Cascade.BernsteinTransfer
+import Cascade.DimensionBlind
