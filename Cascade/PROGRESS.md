@@ -53,6 +53,12 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 > and of every wavevector vanishing, all three layer right-hand sides vanish — a nontrivial,
 > self-perpetuating equilibrium with no growth. So the layer model does not generically blow up, and
 > what remains there is the construction of good data.
+> `Cascade/PerShellThreshold.lean` then replaces the vague "the homogeneities tie at `e = 1`" with
+> the **exact per-shell criterion** `u_{j+1} > (ν/6)·2^{(e−1)j}` — scale-invariant exactly at
+> `e = 1` — and proves that **no criterion reading the enstrophy alone can decide the sign of its
+> rate at `e = 1`**, by exhibiting two nonnegative states with equal enstrophy and opposite rates.
+> That is the honest sense in which this threshold is pinnable: the criterion is exact, and the
+> impossibility of a single-number version at criticality is a theorem.
 > `lake build Cascade` and
 > `lake build Criticality` are both
 > green; **every** new theorem's `#print axioms` is `[propext, Classical.choice, Quot.sound]`;
@@ -93,6 +99,8 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 | `Cascade/ForcedModel.lean` | stage B — the forced model; forced energy and enstrophy bounds (both negative) |
 | `Cascade/BuoyancySign.lean` | stage B′ — `\|κ\|` replaces `κ`: no-blowup for **every** sign of `κ` (11 statements re-proved) |
 | `Cascade/DissipationThreshold.lean` | the dissipation threshold: no blowup for degree `e ≥ 2`; the barrier ties at `e = 1`; quadratic domination provably fails below `e = 2` |
+| `Cascade/PerShellThreshold.lean` | the **exact per-shell criterion** `u_{j+1} > (ν/6)·2^{(e−1)j}`, and the theorem that no enstrophy-only criterion decides at `e = 1` |
+| `Cascade/TruncatedRegularity.lean` | **the truncated model is trivially globally regular** — the honest statement after the predicate repair |
 | `Cascade/TruncatedRegularity.lean` | **honest replacement**: the truncated model is trivially globally regular (transfer cancellation, exact energy identity, finite-range norm domination by the energy) |
 | `Cascade/BlowupEngine.lean` | the reversed-Bernoulli engine + the inverted Hölder lemma (abstract, correct, **currently unused**) |
 | `Cascade/PositivityDegreeE.lean` | **deleted** — fed the withdrawn `e = 0` blowup capstone |
@@ -107,9 +115,10 @@ Where we are now. The *target* is `PLAN.md`; the *why* is `VISION.md`.
 `Cascade.lean` imports `ShellModel`, `Boussinesq`, `BoussinesqScaling`, `BoussinesqEnergy`,
 `DissipationDegree`, `Lacunary`, `Amplitude`, `Phase`, `PhaseGrowth`, `PhaseControl`, `Layers`,
 `Obstruction`, `Gronwall`, `NoBlowup`, `ForcedModel`, `Enstrophy`, `Riccati`, `EnstrophyBound`,
-`BuoyancySign`, `DissipationThreshold`, `BlowupEngine`, `TruncatedRegularity`, `LayerTrap`,
-`ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain). (`PositivityDegreeE`,
-`BlowupRate` and `BlowupDegreeZero` have been deleted — see the correctness episode below.)
+`BuoyancySign`, `DissipationThreshold`, `PerShellThreshold`, `BlowupEngine`, `TruncatedRegularity`,
+`LayerTrap`, `ScaleObstruction`, `BernsteinTransfer` (and hence the Bernstein chain).
+(`PositivityDegreeE`, `BlowupRate` and `BlowupDegreeZero` have been deleted — see the correctness
+episode below.)
 
 ---
 
@@ -1119,6 +1128,92 @@ barrier reaches, and there was never room to demonstrate the threshold by loweri
 integers. The continuous threshold would need `Real.rpow` for `2^{ek}`, real `e`, which is a
 different (and much messier) formalisation; `dissipation_interp_sq` deliberately avoids it by
 squaring, which turns every exponent into an integer.
+
+---
+
+## Done — the exact per-shell threshold (`Cascade/PerShellThreshold.lean`)
+
+The threshold section above states the marginality of `e = 1` only as "the two homogeneities tie".
+This file replaces that with an **exact, computable criterion**, and turns the fact that no
+single-number threshold exists at `e = 1` into a **theorem**.
+
+### The exact identity
+
+Weighting the degree-`e` velocity equation by `2^{2k}u_k` and summing, the transfer telescopes
+(reindexing `j = k−1` gives `8`, the second piece gives `2`, difference `6`, and the outer factor `2`
+makes `12`; the Dirichlet values kill both boundary terms):
+
+```lean
+theorem enstrophy_pairing_degree (ν κ : ℝ) (e : ℤ) (u θ : ℤ → ℝ) (N : ℕ)
+    (huBot : u (-1) = 0) (huTop : u (N:ℤ) = 0) :
+    2 * (∑ k ∈ Finset.range N, dyadicWeight (2*(k:ℤ)) * u (k:ℤ)
+          * velocityRHSDegreeE ν κ 1 0 e u θ (k:ℤ))
+      = 12 * (∑ j ∈ Finset.range (N-1), dyadicWeight (3*(j:ℤ)) * (u (j:ℤ))^2 * u ((j:ℤ)+1))
+        + 2 * κ * (∑ k ∈ Finset.range N, dyadicWeight (2*(k:ℤ)) * u (k:ℤ) * θ (k:ℤ))
+        - 2 * ν * (∑ k ∈ Finset.range N, dyadicWeight ((2+e)*(k:ℤ)) * (u (k:ℤ))^2)
+```
+
+### The criterion, and why `e = 1` is the critical point
+
+Comparing the transfer and dissipation contributions **shell by shell**, the transfer wins at
+shell `j` exactly when `u_{j+1}` exceeds the bar
+
+```lean
+def perShellBar (ν : ℝ) (e : ℤ) (j : ℕ) : ℝ := (ν / 6) * dyadicWeight ((e - 1) * (j : ℤ))
+
+theorem perShell_iff (ν : ℝ) (hν : 0 < ν) (e : ℤ) (u : ℤ → ℝ) (j : ℕ) (huj : u (j:ℤ) ≠ 0) :
+    2 * ν * dyadicWeight ((2+e)*(j:ℤ)) * (u (j:ℤ))^2
+        < 12 * dyadicWeight (3*(j:ℤ)) * (u (j:ℤ))^2 * u ((j:ℤ)+1)
+      ↔ perShellBar ν e j < u ((j:ℤ)+1)
+```
+
+**The bar is scale-invariant in `j` exactly at `e = 1`** (`bar_scale_invariant`), strictly
+*increasing* in `j` for `e > 1` (`bar_strictMono`, so small scales face an ever-higher bar and
+dissipation wins) and strictly *decreasing* for `e < 1` (`bar_strictAnti`, so small scales grow ever
+more easily). That is the criticality as a number:
+
+| `e` | bar `(ν/6)·2^{(e−1)j}` | verdict |
+|---|---|---|
+| `e > 1` | rises with `j` | regular |
+| `e = 1` | **constant** `ν/6` | marginal |
+| `e < 1` | falls with `j` | blowup |
+
+### The headline: no single-number criterion at `e = 1`
+
+At `e = 1` the identity collapses to a sum whose **sign depends on the distribution of `u`, not its
+size**:
+
+```lean
+theorem budget_degree_one … :
+    2 * (∑ k ∈ Finset.range N, …) = ∑ j ∈ Finset.range N,
+        dyadicWeight (3*(j:ℤ)) * (u (j:ℤ))^2 * (12 * u ((j:ℤ)+1) - 2*ν)
+```
+
+and the file exhibits two nonnegative states with **the same enstrophy and opposite rates**:
+
+| state | enstrophy | rate |
+|---|---|---|
+| `u = (5, 0, 0, …)` | `25` | `−50` |
+| `u = (3, 2, 0, …)` | `25` | `+134` |
+
+```lean
+theorem same_enstrophy_opposite_sign : ∃ u v : ℤ → ℝ, (∀ k, 0 ≤ u k) ∧ (∀ k, 0 ≤ v k)
+    ∧ enstrophy u 2 = enstrophy v 2 ∧ budget2 1 u < 0 ∧ 0 < budget2 1 v
+
+theorem no_enstrophy_only_criterion :
+    ¬ ∃ P : ℝ → Prop, ∀ u : ℤ → ℝ, (∀ k, 0 ≤ u k) → (P (enstrophy u 2) ↔ 0 < budget2 1 u)
+```
+
+**So no criterion reading the enstrophy alone can decide the sign of its own rate at `e = 1`.** This
+is non-pinnability stated exactly, and it is not vacuous: both witnesses are concrete and the
+contradiction is derived, not assumed.
+
+**Why this is the honest version of "pin the threshold".** The criterion is pinned exactly — a
+closed-form critical amplitude per shell — and the *reason it cannot be sharpened to a single
+number* is a theorem. At `e > 1` the rising bar suppresses the high shells regardless of shape, so
+one number decides; at `e < 1` the falling bar favours them regardless of shape, so one number
+decides; only at `e = 1` does shape get a vote. That is the precise sense in which the interesting
+case is the undecidable one.
 
 ---
 

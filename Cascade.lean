@@ -19,6 +19,7 @@ import Cascade.Riccati
 import Cascade.EnstrophyBound
 import Cascade.BuoyancySign
 import Cascade.DissipationThreshold
+import Cascade.PerShellThreshold
 import Cascade.TruncatedRegularity
 import Cascade.BlowupEngine
 import Cascade.ScaleObstruction
