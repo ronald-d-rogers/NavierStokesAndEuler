@@ -1576,6 +1576,35 @@ marked ✓ below).
   ours to claim. The toy does not merely fail to blow up at the physical dimension — it provably
   cannot, and that was known before this project began.
 
+**✓ Also verified first-hand: the intermittency framework itself** (Dai, *Dyadic models with
+intermittency dependence for the Hall MHD*, arXiv:2006.15094, §2 and §3.1).
+
+* **How `δ` is defined.** "we gave a mathematical definition of intermittency dimension `δ` of a
+  flow through saturation level of Bernstein's inequality. For 3D flow, `δ` belongs to `[0,3]`"
+  (§2), with the optimal relation `‖v_j‖_{L^∞} ∼ λ_j^{(3−δ)/2}‖v_j‖_{L²}` at each scale (eq. (2.4)).
+  So `δ` is read off as the *slope* of a log–log asymptote, measured down from the Bernstein
+  ceiling — see `Cascade/intermittency_asymptote.svg`.
+* **The two ends.** "Kolmogorov's theory corresponds to the extreme intermittency regime `δ = 3`, in
+  which turbulent eddies fill the space" — so `δ = n` is the *flattest* line (no concentration) and
+  `δ = 0` is the steepest, i.e. the ceiling itself. And "numerical simulations and experimental
+  studies show that `δ ≈ 2.7`": real turbulence is only mildly intermittent.
+* **The model.** Eq. (3.7): `d/dt a_j + νλ_j²a_j − α(λ_{j−1}^{(5−δ)/2}a_{j−1}² − …) = 0` with
+  `a_j = ‖u_j‖_{L²}`. The amplitude is **dimension-free**; the dimension sits in the *nonlinearity
+  exponent* `(5−δ)/2`, against dissipation `λ_j²` (the honest Laplacian). `α=1, β=0` is
+  Katz–Pavlović, `α=0, β=1` is Obukhov.
+* **The threshold, from that equation.** Nonlinearity beats dissipation iff `(5−δ)/2 > 2` iff
+  `δ < 1`; the same arithmetic in `n` dimensions gives the critical case `δ = n − 2`. Dai's abstract
+  confirms the shape — global solutions when `δ` is above the threshold, finite-time blow-up when
+  below, with the blow-up regime flagged **"(unphysical)"**.
+* **The crossover at dimension 5, and why it is not a theorem about Navier–Stokes.** The obstruction
+  (dissipation wins) holds iff `δ > n − 2`. At the observed `δ ≈ 2.7` that gives obstruction for
+  `n ≤ 4` and none from `n ≥ 5` — **Palasek's threshold** — for every `δ ∈ (2,3]`. Boundary care: at
+  `δ = 3, n = 5` the exponent is exactly `2`, so the honest statement is "dissipation does not win
+  from dimension 5", not "nonlinearity strictly wins". And `2.7` is a *measured* constant, so this is
+  two heuristics agreeing at a measurement, not a theorem.
+  `Cascade/IntermittencyThreshold.lean` formalizes the arithmetic with `2 < δ ≤ 3` as an explicit
+  hypothesis, so the empirical input stays visible.
+
 **Reported by the prior-art check, not independently re-verified here.** Pointers only.
 
 * Palasek's remark itself — Bernstein `N_k^{3/2}` versus depletion `N_k²`, with "in high dimension
@@ -1588,10 +1617,11 @@ marked ✓ below).
   Cheskidov–Dai–Friedlander survey (JMFM **25** (2023), arXiv:2209.10203): "5D is a common threshold
   for models exhibiting a blow-up" — *not* via Palasek's Bernstein-amplitude comparison.
 * **Dimension-dependent dyadic models do exist**, but the dimension enters as the *nonlinearity
-  exponent*, not as an intrinsic per-shell `N_k^{d/2}` amplitude factor. The intermittency-dimension
-  models (Cheskidov–Dai, Proc. Roy. Soc. Edinb. A **149** (2019) 429–446, arXiv:1510.00379, for the
-  definition of intermittency dimension; CDS survey eq. (2.7); Dai arXiv:2006.15094 and
-  arXiv:2108.12913) have `θ = (2+n−δ)/2` with `a_j ~ ‖u_j‖_{L²}`, dimension-free.
+  exponent*, not as an intrinsic per-shell `N_k^{d/2}` amplitude factor — verified above for `n = 3`.
+  The `n`-dimensional form `θ = (2+n−δ)/2` and the equivalence statements below are reported, not
+  verified here: Cheskidov–Dai, Proc. Roy. Soc. Edinb. A **149** (2019) 429–446, arXiv:1510.00379
+  (source of the definition of intermittency dimension); CDS survey arXiv:2209.10203 eq. (2.7); Dai
+  arXiv:2006.15094 and arXiv:2108.12913.
 * The dimension ↔ dissipation-degree trade-off is therefore in the literature as a *frequency
   rescaling*: CSDF "`(3.6)` is equivalent to `(3.7)` with `θ = 1/γ`", and Dai's `α = 1/θ` via
   `λ_j = λ̄_j^α`, i.e. generalised diffusion `(−Δ)^α`. The additive `2 ↦ 2 − d` bookkeeping is

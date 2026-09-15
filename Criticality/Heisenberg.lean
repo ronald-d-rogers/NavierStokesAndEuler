@@ -11,6 +11,26 @@ For `f ∈ L²`, the product of the spatial and frequency spreads is bounded bel
 positive constant. This is the "concentration barrier" in its most basic quantitative
 form: a function and its Fourier transform cannot both be tightly concentrated.
 
+## What this is not (scope, and a guard against a tempting conflation)
+
+This is the **uncertainty** principle: a *trade-off*. Squeezing a function in space forces its
+Fourier transform to spread — a see-saw with a minimum total, on which one side can be traded against
+the other without limit.
+
+It is **not** the Pauli exclusion principle. Pauli is not an inequality at all but the antisymmetry
+of a multi-fermion wavefunction: `ψ(x,y) = −ψ(y,x)` forces `ψ(x,x) = 0`, a sign argument that no
+Cauchy–Schwarz estimate reproduces. Both are sometimes glossed as "things cannot be on top of each
+other", which is exactly why they get confused: one is a *ceiling on concentration*, the other a
+*capacity limit* of one particle per state. (The diagonal vanishing is for the *full* wavefunction
+including spin; two fermions of opposite spin may share a position.)
+
+The commutator relation formalised here is also the algebra that a free field mode obeys in quantum
+field theory — where what matters physically is the *variance of the ground state*, a seed amplitude
+rather than a ceiling on concentration. Same algebra, different role; the roles should not be
+conflated either. Within this repository the barrier feeds `Cascade/Bernstein.lean` (which imports
+`Cascade/ConcentrationBarrier.lean` directly), and the Bernstein exponent appears again as the `d/2`
+compared against viscous dissipation in `Cascade/BernsteinTransfer.lean`.
+
 This file establishes the **one-dimensional core** — the commutator identity behind
 Heisenberg — in the Schwartz-space medium `𝓢(ℝ, ℝ)`, and connects the momentum spread
 `‖f'‖₂` to the frequency spread `‖ξ·𝓕 f‖₂` (Plancherel + the derivative–Fourier relation).

@@ -50,6 +50,20 @@ the shell dynamics.  A one-mode-per-octave dyadic model has no intrinsic dimensi
 crossover it appears to exhibit is produced by the constraint that was inserted into it, not by the
 model itself.
 
+(e) **The ceiling is the concentration barrier — a see-saw, not a prohibition.**  The envelope
+`2^{dk/2}√E` and the `d = 2` saturation identity are the Fourier **concentration barrier** of
+Pillar A: `Cascade/ConcentrationBarrier.lean` states the core fact (a Schwartz function's pointwise
+value is bounded by the `L¹` norm of its Fourier transform) and `Criticality/Heisenberg.lean` gives
+its commutator form.  The *intermittency dimension* `δ` of the turbulence-modelling literature is
+defined as the saturation level of exactly this barrier, via
+`‖v_j‖_∞ ∼ λ_j^{(n−δ)/2}‖v_j‖_{L²}`; so `δ = 0` — the worst case the calibration assumes — *is* the
+barrier, and `δ = n` is no concentration at all.  This is a ceiling on how much can be squeezed into
+a small scale, and it is a trade-off: concentrate in space and the frequency spread grows.  It is
+**not** the Pauli exclusion principle, which is not an inequality at all but the antisymmetry of a
+multi-fermion state and cannot be obtained from any Cauchy–Schwarz estimate.  The two are easily
+conflated ("things cannot be on top of each other"); see the scope note in
+`Criticality/Heisenberg.lean`.
+
 ## Contents
 
 1. `bernstein_constraint_vacuous` — Bernstein in dimension `d ≥ 2` holds for every state.
